@@ -1,9 +1,10 @@
 import { GameState, Size, Position } from './types.js';
-import { Tile, createTile, getTile, addEntityToTile } from './tiles.js';
+import { Tile, createTile, getTile, addEntityToTile, getEntitiesOnTile } from './tiles.js';
 import { createUuid } from './utilities/createUuid.js';
 import { repeat } from './utilities/repeat.js';
 import { getRandomNumberInRange } from './random/getRandomNumberInRange.js';
 import { createEntity, Entity } from './entities.js';
+import { choose } from './random/choose.js';
 
 export interface Level {
 	id: string;
@@ -61,6 +62,17 @@ export function findTileInLevel(state: GameState, level: Level, position: Positi
 	return getTile(state, level.tileSet[position.x][position.y]);
 }
 
+export function getEntitiesInLevel(state: GameState, level: Level): Entity[] {
+	const tilesInLevel = getTilesInLevel(state, level);
+
+	return tilesInLevel.reduce((entities: Entity[], tile) => {
+		return [
+			...entities,
+			...getEntitiesOnTile(state, tile),
+		];
+	}, []);
+}
+
 export function doesPositionExistInLevel(level: Level, position: Position): boolean {
 	return level.tileSet.hasOwnProperty(position.x)
 		&& level.tileSet[position.x].hasOwnProperty(position.y);
@@ -103,13 +115,23 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 		isEntrance: true,
 	}), level, entrancePosition);
 
+	repeat(5, () => {
+		const freeTiles = getTilesInLevel(state, level).filter(tile => !tile.entities.length);
+		const tileForWall = choose(freeTiles);
+
+		addEntityToLevel(state, createEntity(state, {
+			sprite: choose(['bookcase', 'bookcase', 'bookcase', 'bookcase-low', 'bookcase-low-decorated', 'table']),
+			isSolid: true,
+		}), level, tileForWall.position);
+	});
+
+	const freeTiles = getTilesInLevel(state, level).filter(tile => !tile.entities.length);
+	const tileForExit = choose(freeTiles);
+
 	addEntityToLevel(state, createEntity(state, {
 		sprite: 'exit',
 		isExit: true,
-	}), level, {
-		x: getRandomNumberInRange(0, size.width - 1),
-		y: getRandomNumberInRange(0, size.height - 1),
-	});
+	}), level, tileForExit.position);
 
 	return level;
 }

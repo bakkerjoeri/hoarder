@@ -1,12 +1,22 @@
 import { GameState, Position } from './types.js';
 import { createUuid } from './utilities/createUuid.js';
-import { findTileInLevel, getLevel } from './levels.js';
+import { findTileInLevel, getLevel, addEntityToLevel, Level } from './levels.js';
 import { addEntityToTile, removeEntityFromTile } from './tiles.js';
+
+export type Component = any;
 
 export interface Entity {
     id: string;
-    [componentName: string]: any;
+    [componentName: string]: Component;
 }
+
+interface ComponentFilterMap {
+	[componentName: string]: ComponentFilter;
+}
+
+type ComponentFilter = boolean | any | {
+	(value: any): boolean;
+};
 
 export function createEntity(state: GameState, components: any): Entity {
     const entity = {
@@ -49,6 +59,36 @@ export function findEntitiesWithComponent(state: GameState, componentName: strin
     });
 }
 
+export function findEntities(entities: Entity[], filters: ComponentFilterMap): Entity[] {
+	return entities.filter(entity => {
+		return doesEntityValueMatch(entity, filters);
+	});
+}
+
+export function findEntity(entities: Entity[], filters: ComponentFilterMap): Entity | undefined {
+	return entities.find(entity => {
+		return doesEntityValueMatch(entity, filters);
+	});
+}
+
+function doesEntityValueMatch(entity: Entity, filters: ComponentFilterMap): boolean {
+	return Object.entries(filters).every(([componentName, filterValue]) => {
+		if (typeof filterValue === 'function' && entity.hasOwnProperty(componentName)) {
+			return filterValue(entity[componentName]);
+		}
+
+		if (typeof filterValue === 'boolean' && !filterValue) {
+			return !entity.hasOwnProperty(componentName) || !entity[componentName];
+		}
+
+		if (typeof filterValue === 'boolean' && filterValue) {
+			return entity.hasOwnProperty(componentName) && !!entity[componentName];
+		}
+
+		return entity.hasOwnProperty(componentName) && filterValue === entity[componentName];
+	});
+}
+
 export function moveEntityToPosition(state: GameState, entity: Entity, position: Position): void {
 	if (!entity.currentLevel) {
 		throw new Error(`Cannot move entity ${entity.id} because it doesn't exist in any level.`);
@@ -64,6 +104,14 @@ export function moveEntityToPosition(state: GameState, entity: Entity, position:
 	const nextTile = findTileInLevel(state, currentLevel, position);
 	addEntityToTile(entity, nextTile);
     entity.position = position;
+}
+
+export function moveEntityToLevel(state: GameState, entity: Entity, level: Level, position: Position): void {
+	if (entity.currentLevel) {
+		removeEntityFromLevel(state, entity);
+	}
+
+	addEntityToLevel(state, entity, level, position);
 }
 
 export function removeEntityFromLevel(state: GameState, entity: Entity): void {
