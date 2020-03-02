@@ -94,6 +94,10 @@ export function getTilesInLevel(state: GameState, level: Level): Tile[] {
 	return tileIds.map(tileId => getTile(state, tileId));
 }
 
+export function getFreeTilesInLevel(state: GameState, level: Level): Tile[] {
+	return getTilesInLevel(state, level).filter(tile => !tile.entities.length);
+}
+
 export function generateLevel(state: GameState, size: Size, entrancePosition?: Position): Level {
 	const level = createLevel(state);
 
@@ -116,78 +120,37 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 	}), level, entrancePosition);
 
 	repeat(5, () => {
-		const freeTiles = getTilesInLevel(state, level).filter(tile => !tile.entities.length);
-		const tileForWall = choose(freeTiles);
-
 		addEntityToLevel(state, createEntity(state, {
 			sprite: choose(['bookcase', 'bookcase', 'bookcase', 'bookcase-low', 'bookcase-low-decorated', 'table']),
 			isSolid: true,
-		}), level, tileForWall.position);
+		}), level, choose(getFreeTilesInLevel(state, level)).position);
 	});
 
-	const freeTiles = getTilesInLevel(state, level).filter(tile => !tile.entities.length);
-	const tileForExit = choose(freeTiles);
+	addEntityToLevel(state, createEntity(state, {
+		sprite: 'skeleton',
+		isActor: true,
+		isNonPlayer: true,
+		health: {
+			current: 3,
+			max: 3,
+		},
+	}), level, choose(getFreeTilesInLevel(state, level)).position);
+
+	addEntityToLevel(state, createEntity(state, {
+		sprite: 'skulls',
+		isActor: true,
+		isNonPlayer: true,
+		health: {
+			current: 5,
+			max: 5,
+		},
+	}), level, choose(getFreeTilesInLevel(state, level)).position);
 
 	addEntityToLevel(state, createEntity(state, {
 		sprite: 'exit',
 		isExit: true,
-	}), level, tileForExit.position);
+	}), level, choose(getFreeTilesInLevel(state, level)).position);
 
 	return level;
 }
-
-
-// function generateMap(state: GameState): void {
-// 	state.tiles = createTileMap(7, 7);
-
-// 	repeat(3, () => {
-// 		const freeTiles = getTiles(state).filter(tile => !tile.entities.length);
-// 		const tileForEnemy = choose(freeTiles);
-
-// 		addEntityToMap(state, createEntity({
-// 			color: 'red',
-// 			isSolid: true,
-// 			health: {
-// 				max: 3,
-// 				current: 3,
-// 			},
-// 		}), tileForEnemy.position.x, tileForEnemy.position.y);
-// 	});
-
-// 	repeat(5, () => {
-// 		const freeTiles = getTiles(state).filter(tile => !tile.entities.length);
-// 		const tileForWall = choose(freeTiles);
-
-// 		addEntityToMap(state, createEntity({
-// 			color: 'black',
-// 			isSolid: true,
-// 		}), tileForWall.position.x, tileForWall.position.y);
-// 	});
-
-// 	repeat(1, () => {
-// 		const freeTiles = getTiles(state).filter(tile => !tile.entities.length);
-// 		const tileForPlayer = choose(freeTiles);
-
-// 		addEntityToMap(state, createEntity({
-// 			player: true,
-// 			color: 'blue',
-// 			isSolid: true,
-// 			health: {
-// 				max: 3,
-// 				current: 3,
-// 			},
-// 			charge: 0,
-// 		}), tileForPlayer.position.x, tileForPlayer.position.y);
-// 	});
-
-// 	repeat(1, () => {
-// 		const freeTiles = getTiles(state).filter(tile => !tile.entities.length);
-// 		const exitTile = choose(freeTiles);
-
-// 		addEntityToMap(state, createEntity({
-// 			sprite: 'staircase',
-// 			isExit: true,
-// 		}), exitTile.position.x, exitTile.position.y);
-// 	});
-// }
 
