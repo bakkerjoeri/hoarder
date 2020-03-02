@@ -1,7 +1,7 @@
 import { GameState, Position } from './types.js';
 import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
-import { Entity, findEntitiesWithComponent, moveEntityToPosition, createEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel } from './entities.js';
+import { Entity, moveEntityToPosition, createEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
 import { setupGame } from './utilities/setupGame.js';
 import { start } from './utilities/tick.js';
@@ -10,15 +10,19 @@ import { getEntitiesOnTile } from './tiles.js';
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
 eventBus.on('update', update);
+eventBus.on('update', updateActionTicks);
+eventBus.on('concludeTurn', spendEnergy);
 eventBus.on('draw', draw);
 eventBus.on('actInDirection', actInDirection);
 
+console.log(eventBus);
 const state: GameState = {
 	currentLevel: null,
     entities: {},
 	tiles: {},
 	levels: {},
 	sprites: {},
+	debugging: true,
 }
 
 addSprite(state, 'exit', 'src/assets/staircase.png', { width: 16, height: 16 });
@@ -68,8 +72,8 @@ if (entranceEntity) {
 	const entranceTile = findTileInLevel(state, levelOne, entranceEntity.position);
 
 	addEntityToLevel(state, createEntity(state, {
-		player: true,
 		sprite: 'hoarder',
+		isPlayer: true,
 		isSolid: true,
 		health: {
 			max: 3,
@@ -86,37 +90,42 @@ start((time: number) => {
 });
 
 window.addEventListener('keyup', (event: KeyboardEvent) => {
-    const playerEntities = findEntitiesWithComponent(state, 'player');
+	if (state.currentLevel) {
+		const playerEntity = findEntity(
+			getEntitiesInLevel(state, getLevel(state, state.currentLevel)),
+			{ isPlayer: true }
+		);
 
-    playerEntities.forEach((playerEntity: Entity) => {
-        if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
-            actInDirection(state, playerEntity, 0, -1);
-        }
+		if (playerEntity) {
+			if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
+				actInDirection(state, playerEntity, 0, -1);
+			}
 
-        if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
-            actInDirection(state, playerEntity, 1, 0);
-        }
+			if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
+				actInDirection(state, playerEntity, 1, 0);
+			}
 
-        if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
-            actInDirection(state, playerEntity, 0, 1);
-        }
+			if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
+				actInDirection(state, playerEntity, 0, 1);
+			}
 
-        if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
-            actInDirection(state, playerEntity, -1, 0);
+			if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
+				actInDirection(state, playerEntity, -1, 0);
+			}
+
+			if (event.key === ' ' || event.key.toLowerCase() === 'e') {
+				performContextSensitiveAction(state, playerEntity);
+			}
+
+			if (state.debugging && event.key.toLowerCase() === '[') {
+				showPreviousLevel();
+			}
+
+			if (state.debugging && event.key.toLowerCase() === ']') {
+				showNextLevel();
+			}
 		}
-
-		if (event.key === ' ' || event.key.toLowerCase() === 'e') {
-			performContextSensitiveAction(state, playerEntity);
-		}
-
-		if (event.key.toLowerCase() === '[') {
-			showPreviousLevel();
-		}
-
-		if (event.key.toLowerCase() === ']') {
-			showNextLevel();
-		}
-    });
+	}
 });
 
 function update(time: number, state: GameState): void {
@@ -163,16 +172,55 @@ function actInDirection(state: GameState, entity: Entity, dx: number, dy: number
     const attackableEntity = entitiesOnNextTile.find(entity => entity.hasOwnProperty('health'));
 
     if (attackableEntity) {
-        eventBus.emit('doDamage', state, entity, attackableEntity);
-    } else {
-		moveEntityToPosition(state, entity, nextPosition);
-		entity.drawOffset = {
-			x: -1 * dx * TILE_SIZE,
-			y: -1 * dy * TILE_SIZE,
+		attackableEntity.health.current -= 1;
+		if (attackableEntity.health.current === 0) {
+			removeEntityFromLevel(state, attackableEntity);
 		}
-    }
 
-    eventBus.emit('concludeTurn', entity);
+		eventBus.emit('concludeTurn', entity, 100);
+		return;
+	}
+
+	moveEntityToPosition(state, entity, nextPosition);
+	entity.drawOffset = {
+		x: -1 * dx * TILE_SIZE,
+		y: -1 * dy * TILE_SIZE,
+	}
+
+	console.log(entity);
+
+	eventBus.emit('concludeTurn', entity, 100);
+	return;
+}
+
+function spendEnergy(entity: Entity, energy: number): void {
+	// entity.actionTicks += energy;
+}
+
+function updateActionTicks(time: number, state: GameState): void {
+	// if (state.currentLevel) {
+	// 	const currentLevel = getLevel(state, state.currentLevel);
+	// 	const entitiesInLevel = getEntitiesInLevel(state, currentLevel);
+	// 	const entitiesThatCanAct = findEntities(entitiesInLevel, { actionTicks: 0 });
+
+	// 	if (entitiesThatCanAct.length === 0) {
+	// 		const entitiesWithActionTicks = findEntities(entitiesInLevel, {
+	// 			actionTicks: (actionTicks: number) => actionTicks > 0,
+	// 		});
+
+	// 		const ticksUntilNextTurn = entitiesWithActionTicks.reduce((lowestTicksFound: number, entity) => {
+	// 			if (lowestTicksFound > entity.actionTicks) {
+	// 				return entity.actionTicks;
+	// 			}
+
+	// 			return lowestTicksFound;
+	// 		}, Infinity);
+
+	// 		entitiesWithActionTicks.forEach((entity) => {
+	// 			entity.actionTicks = entity.actionTicks - ticksUntilNextTurn;
+	// 		});
+	// 	}
+	// }
 }
 
 function performContextSensitiveAction(state: GameState, entity: Entity): void {
@@ -194,7 +242,6 @@ function exitLevel(state: GameState, entity: Entity): void {
 
 	if (isCurrentLevelFinalLevel && !entity.isPlayer) {
 		removeEntityFromLevel(state, entity);
-		eventBus.emit('concludeTurn', entity);
 		return;
 	}
 

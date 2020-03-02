@@ -49,16 +49,6 @@ export function getEntities(state: GameState): Entity[] {
     }, []);
 }
 
-export function findEntitiesWithComponent(state: GameState, componentName: string, value?: any): Entity[] {
-    return getEntities(state).filter((entity: Entity) => {
-        if (value) {
-            return entity[componentName] === value;
-        }
-
-        return !!entity[componentName];
-    });
-}
-
 export function findEntities(entities: Entity[], filters: ComponentFilterMap): Entity[] {
 	return entities.filter(entity => {
 		return doesEntityValueMatch(entity, filters);

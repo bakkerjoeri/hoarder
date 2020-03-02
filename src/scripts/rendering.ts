@@ -53,15 +53,18 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 				);
 			}
 
-			if (entity.hasOwnProperty('health')) {
-				// drawText(
-				// 	context,
-				// 	entity.health.current.toString(),
-				// 	12,
-				// 	entity.position.x * TILE_SIZE - 3,
-				// 	entity.position.y * TILE_SIZE - 3,
-				// 	'white'
-				// );
+			if (state.debugging === true && entity.hasOwnProperty('health')) {
+				context.fillStyle = 'red';
+				context.fillRect(entity.position.x * TILE_SIZE, entity.position.y * TILE_SIZE, 15, 15);
+
+				drawText(
+					context,
+					entity.health.current.toString(),
+					12,
+					entity.position.x * TILE_SIZE + 4,
+					entity.position.y * TILE_SIZE + 11,
+					'white'
+				);
 			}
 		});
 	}
