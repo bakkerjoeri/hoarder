@@ -5,6 +5,7 @@ import { repeat } from './utilities/repeat.js';
 import { getRandomNumberInRange } from './random/getRandomNumberInRange.js';
 import { createEntity, Entity } from './entities.js';
 import { choose } from './random/choose.js';
+import { cardinalDirections } from './graph/grid.js';
 
 export interface Level {
 	id: string;
@@ -60,6 +61,19 @@ export function findTileInLevel(state: GameState, level: Level, position: Positi
 	}
 
 	return getTile(state, level.tileSet[position.x][position.y]);
+}
+
+export function findSurroundingTiles(state: GameState, level: Level, position: Position, directions = cardinalDirections): Tile[] {
+	const positionsInDirections = directions.map(direction => ({
+		x: position.x + direction[0],
+		y: position.y + direction[1],
+	}));
+
+	const existingPositions = positionsInDirections.filter((positionInDirection) => {
+		return doesPositionExistInLevel(level, positionInDirection);
+	});
+
+	return existingPositions.map(existingPosition => findTileInLevel(state, level, existingPosition));
 }
 
 export function getEntitiesInLevel(state: GameState, level: Level): Entity[] {
@@ -126,20 +140,26 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 		}), level, choose(getFreeTilesInLevel(state, level)).position);
 	});
 
-	addEntityToLevel(state, createEntity(state, {
-		sprite: 'skeleton',
-		isActor: true,
-		isNonPlayer: true,
-		health: {
-			current: 3,
-			max: 3,
-		},
-	}), level, choose(getFreeTilesInLevel(state, level)).position);
+	repeat(2, () => {
+		addEntityToLevel(state, createEntity(state, {
+			sprite: 'skeleton',
+			isActor: true,
+			isNonPlayer: true,
+			isSolid: true,
+			actionCost: 100,
+			health: {
+				current: 3,
+				max: 3,
+			},
+		}), level, choose(getFreeTilesInLevel(state, level)).position);
+	});
 
 	addEntityToLevel(state, createEntity(state, {
 		sprite: 'skulls',
 		isActor: true,
 		isNonPlayer: true,
+		isSolid: true,
+		actionCost: 200,
 		health: {
 			current: 5,
 			max: 5,

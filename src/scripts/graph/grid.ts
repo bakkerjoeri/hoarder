@@ -2,17 +2,17 @@ import { Graph } from './graph.js';
 import { Node, GraphSearchResults } from './types.js';
 import { repeat } from './../utilities/repeat.js';
 
-const DIRECTION_NORTH     = [0, -1];
-const DIRECTION_NORTHEAST = [1, -1];
-const DIRECTION_EAST      = [1, 0];
-const DIRECTION_SOUTHEAST = [1, 1];
-const DIRECTION_SOUTH     = [0, 1];
-const DIRECTION_SOUTHWEST = [-1, 1];
-const DIRECTION_WEST      = [-1, 0];
-const DIRECTION_NORTHWEST = [-1, -1];
+export const DIRECTION_NORTH     = [0, -1];
+export const DIRECTION_NORTHEAST = [1, -1];
+export const DIRECTION_EAST      = [1, 0];
+export const DIRECTION_SOUTHEAST = [1, 1];
+export const DIRECTION_SOUTH     = [0, 1];
+export const DIRECTION_SOUTHWEST = [-1, 1];
+export const DIRECTION_WEST      = [-1, 0];
+export const DIRECTION_NORTHWEST = [-1, -1];
 
-const cardinalDirections = [DIRECTION_NORTH, DIRECTION_EAST, DIRECTION_SOUTH, DIRECTION_WEST];
-const principalDirections = [DIRECTION_NORTH, DIRECTION_NORTHEAST, DIRECTION_EAST, DIRECTION_SOUTHEAST, DIRECTION_SOUTH, DIRECTION_SOUTHWEST, DIRECTION_WEST, DIRECTION_NORTHWEST];
+export const cardinalDirections = [DIRECTION_NORTH, DIRECTION_EAST, DIRECTION_SOUTH, DIRECTION_WEST];
+export const principalDirections = [DIRECTION_NORTH, DIRECTION_NORTHEAST, DIRECTION_EAST, DIRECTION_SOUTHEAST, DIRECTION_SOUTH, DIRECTION_SOUTHWEST, DIRECTION_WEST, DIRECTION_NORTHWEST];
 
 export function createGridGraph(width: number, height: number, directions: 'cardinal' | 'principal' = 'cardinal'): Graph {
     const graph = new Graph();
