@@ -9,7 +9,7 @@ export class EventBus {
         this.eventHandlers = {
             ...this.eventHandlers,
             [eventType]: [
-                ...this.eventHandlers.eventType || [],
+                ...this.eventHandlers[eventType] || [],
                 handler,
             ],
         };
