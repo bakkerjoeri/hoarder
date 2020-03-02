@@ -28,6 +28,8 @@ addSprite(state, 'bookcase', 'src/assets/bookcase.png', { width: 16, height: 16 
 addSprite(state, 'bookcase-low', 'src/assets/bookcase-low.png', { width: 16, height: 16 });
 addSprite(state, 'bookcase-low-decorated', 'src/assets/bookcase-low-decorated.png', { width: 16, height: 16 });
 addSprite(state, 'table', 'src/assets/table.png', { width: 16, height: 16 });
+addSprite(state, 'skeleton', 'src/assets/skeleton.png', { width: 16, height: 16 });
+addSprite(state, 'skulls', 'src/assets/skulls.png', { width: 16, height: 16 });
 
 function findLevelExitPosition(state: GameState, level: Level): Position | undefined {
 	const exitObject = findEntity(getEntitiesInLevel(state, level), { isExit: true });
