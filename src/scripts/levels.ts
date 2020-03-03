@@ -135,12 +135,12 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 
 	repeat(5, () => {
 		addEntityToLevel(state, createEntity(state, {
-			sprite: choose(['bookcase', 'bookcase', 'bookcase', 'bookcase-low', 'bookcase-low-decorated', 'table']),
+			sprite: choose(['bookcase', 'bookcase', 'bookcase-low', 'bookcase-low', 'bookcase-low', 'bookcase-low-decorated', 'table']),
 			isSolid: true,
 		}), level, choose(getFreeTilesInLevel(state, level)).position);
 	});
 
-	repeat(2, () => {
+	repeat(1, () => {
 		addEntityToLevel(state, createEntity(state, {
 			sprite: 'skeleton',
 			isActor: true,
@@ -154,17 +154,20 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 		}), level, choose(getFreeTilesInLevel(state, level)).position);
 	});
 
-	addEntityToLevel(state, createEntity(state, {
-		sprite: 'skulls',
-		isActor: true,
-		isNonPlayer: true,
-		isSolid: true,
-		actionCost: 200,
-		health: {
-			current: 5,
-			max: 5,
-		},
-	}), level, choose(getFreeTilesInLevel(state, level)).position);
+	repeat(1, () => {
+		addEntityToLevel(state, createEntity(state, {
+			sprite: 'skulls',
+			isActor: true,
+			isNonPlayer: true,
+			isSolid: true,
+			actionCost: 200,
+			health: {
+				current: 5,
+				max: 5,
+			},
+		}), level, choose(getFreeTilesInLevel(state, level)).position);
+	});
+
 
 	addEntityToLevel(state, createEntity(state, {
 		sprite: 'exit',

@@ -1,7 +1,7 @@
 import { GameState, Position } from './types.js';
-import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevel } from './levels.js';
+import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevel, getFreeTilesInLevel } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
-import { Entity, moveEntityToPosition, createEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel } from './entities.js';
+import { Entity, moveEntityToPosition, createEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
 import { setupGame } from './utilities/setupGame.js';
 import { start } from './utilities/tick.js';
@@ -11,12 +11,13 @@ import { Graph } from './graph/graph.js';
 import { resolvePath } from './graph/resolvePath.js';
 import { aStar } from './graph/search/aStar.js';
 import { calculateManhattanDistance } from './graph/calculateManhattanDistance.js';
+import { createHealthComponent } from './components/HealthComponent.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
 eventBus.on('update', update);
 eventBus.on('update', updateActionTicks);
-eventBus.on('update', decideActions)
+eventBus.on('update', decideActions);
 eventBus.on('concludeTurn', spendEnergy);
 eventBus.on('draw', draw);
 
@@ -38,6 +39,8 @@ addSprite(state, 'bookcase-low-decorated', 'src/assets/bookcase-low-decorated.pn
 addSprite(state, 'table', 'src/assets/table.png', { width: 16, height: 16 });
 addSprite(state, 'skeleton', 'src/assets/skeleton.png', { width: 16, height: 16 });
 addSprite(state, 'skulls', 'src/assets/skulls.png', { width: 16, height: 16 });
+addSprite(state, 'witchhat', 'src/assets/witchhat.png', { width: 16, height: 16 });
+addSprite(state, 'frog', 'src/assets/frog.png', { width: 16, height: 16 });
 
 function findLevelExitPosition(state: GameState, level: Level): Position | undefined {
 	const exitObject = findEntity(getEntitiesInLevel(state, level), { isExit: true });
@@ -81,11 +84,19 @@ if (entranceEntity) {
 		isPlayer: true,
 		isSolid: true,
 		actionCost: 100,
-		health: {
-			max: 99,
-			current: 99,
-		},
+		health: createHealthComponent(5),
+		inventory: [],
+		coins: 99,
 	}), levelOne, entranceTile.position);
+
+	addEntityToLevel(state, createEntity(state, {
+		sprite: 'witchhat',
+		name: 'witch\'s hat',
+		effectDescription: 'summon a frog buddy',
+		isItem: true,
+		cost: 2,
+		effect: 'summonFrog',
+	}), levelOne, choose(getFreeTilesInLevel(state, levelOne)).position);
 }
 
 console.log(state);
@@ -125,6 +136,22 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 
 			if (event.key === 'q') {
 				eventBus.emit('concludeTurn', playerEntity, playerEntity.actionCost);
+			}
+
+			if (event.key === '1') {
+				useItemInSlot(state, playerEntity, 0);
+			}
+
+			if (event.key === '2') {
+				useItemInSlot(state, playerEntity, 1);
+			}
+
+			if (event.key === '3') {
+				useItemInSlot(state, playerEntity, 2);
+			}
+
+			if (event.key === '4') {
+				useItemInSlot(state, playerEntity, 3);
 			}
 
 			if (state.debugging && event.key.toLowerCase() === '[') {
@@ -369,8 +396,17 @@ function performContextSensitiveAction(state: GameState, entity: Entity): void {
 	const currentLevel = getLevel(state, entity.currentLevel);
 	const entitiesOnTile = getEntitiesOnTile(state, findTileInLevel(state, currentLevel, entity.position), [entity]);
 
-	if (entitiesOnTile.some(entity => entity.isExit)) {
+	const exitEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isExit)
+	if (exitEntity) {
 		exitLevel(state, entity);
+		return;
+	}
+
+	const itemEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isItem);
+	if (itemEntity) {
+		entity.inventory.push(itemEntity.id);
+		removeEntityFromLevel(state, itemEntity);
+		return;
 	}
 }
 
@@ -392,6 +428,40 @@ function exitLevel(state: GameState, entity: Entity): void {
 	if (entranceToLevel) {
 		moveEntityToLevel(state, entity, nextLevel, entranceToLevel.position);
 		state.currentLevel = nextLevel.id;
+	}
+}
+
+function useItemInSlot(state: GameState, entity: Entity, slotIndex: number): void {
+	if (!entity.inventory.hasOwnProperty(slotIndex)) {
+		return;
+	}
+
+	const itemEntity = getEntity(state, entity.inventory[slotIndex]);
+
+	if (entity.coins < itemEntity.cost) {
+		return;
+	}
+
+	if (itemEntity.effect === 'summonFrog') {
+		const levelOfEntity = getLevel(state, entity.currentLevel);
+		const freeTiles = getFreeTilesInLevel(state, getLevel(state, entity.currentLevel));
+
+		if (!freeTiles.length) {
+			return;
+		}
+
+		const tileForFrog = choose(freeTiles);
+		addEntityToLevel(state, createEntity(state, {
+			sprite: 'frog',
+			isActor: true,
+			isNonPlayer: true,
+			isFriendly: true,
+			isSolid: true,
+			health: createHealthComponent(3),
+			actionCost: 100,
+		}), levelOfEntity, tileForFrog.position);
+
+		entity.coins = entity.coins - itemEntity.cost;
 	}
 }
 

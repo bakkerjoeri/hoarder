@@ -1,7 +1,9 @@
 import { Tile } from './tiles.js';
-import { Entity, findEntities } from './entities.js';
+import { Entity, findEntities, findEntity, getEntity } from './entities.js';
 import { GameState, Size, Position } from './types.js';
 import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
+import { PlayerEntity } from './entities/PlayerEntity.js';
+import { repeat } from './utilities/repeat.js';
 
 const imageCache: {
 	[path: string]: HTMLImageElement;
@@ -19,7 +21,7 @@ export const LEVEL_WIDTH = 7;
 export const LEVEL_HEIGHT = 7;
 export const GAP = TILE_SIZE / 16;
 
-export const GAME_WIDTH = LEVEL_WIDTH * TILE_SIZE;
+export const GAME_WIDTH = 12 * TILE_SIZE;
 export const GAME_HEIGHT = LEVEL_HEIGHT * TILE_SIZE;
 
 export function draw(time: number, state: GameState, context: CanvasRenderingContext2D): void {
@@ -67,6 +69,92 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 				);
 			}
 		});
+
+		// Draw player UI
+		const playerEntity = findEntity(entitiesInLevel, { isPlayer: true }) as PlayerEntity;
+		if (playerEntity && playerEntity.inventory) {
+
+			// Draw player inventory
+			drawText(
+				context,
+				'inventory:',
+				16,
+				7 * TILE_SIZE,
+				2 * TILE_SIZE + 44,
+				'white',
+			);
+
+			const inventoryEntities = playerEntity.inventory.map((entityId) => getEntity(state, entityId));
+			repeat(4, (slotIndex) => {
+				const itemInSlot = inventoryEntities[slotIndex];
+
+				drawText(
+					context,
+					`slot ${slotIndex + 1}`,
+					16,
+					8 * TILE_SIZE,
+					(3 + slotIndex) * TILE_SIZE + 4,
+					itemInSlot ? 'white' : 'gray',
+				);
+
+				if (itemInSlot) {
+					drawSprite(
+						getSprite(state, inventoryEntities[slotIndex].sprite),
+						context,
+						7,
+						3 + slotIndex,
+					);
+
+					drawText(
+						context,
+						`${itemInSlot.name}`,
+						16,
+						8 * TILE_SIZE,
+						(3 + slotIndex) * TILE_SIZE + 22,
+						'white',
+					);
+
+					drawText(
+						context,
+						`${itemInSlot.cost}¢`,
+						16,
+						8 * TILE_SIZE,
+						(3 + slotIndex) * TILE_SIZE + 40,
+						'yellow',
+					);
+
+					drawText(
+						context,
+						`${itemInSlot.effectDescription}`,
+						16,
+						8 * TILE_SIZE + 28,
+						(3 + slotIndex) * TILE_SIZE + 40,
+						'white',
+					);
+				}
+			});
+
+			// Draw health
+			drawText(
+				context,
+
+				`health: ${playerEntity.health.current}/${playerEntity.health.max}HP`,
+				16,
+				7 * TILE_SIZE,
+				0,
+				'red',
+			);
+
+			// Draw coins
+			drawText(
+				context,
+				`coins: ${playerEntity.coins}¢`,
+				16,
+				7 * TILE_SIZE,
+				18,
+				'yellow',
+			);
+		}
 	}
 }
 
@@ -105,8 +193,9 @@ export function drawThing(context: CanvasRenderingContext2D, x: number, y: numbe
 }
 
 export function drawText(context: CanvasRenderingContext2D, text: string, size: number, textX: number, textY: number, color = 'black'): void {
-    context.fillStyle = color;
-    context.font = `${size}px sans-serif`;
+	context.fillStyle = color;
+	context.textBaseline = 'top';
+    context.font = `${size}px monospace`;
     context.fillText(text, textX, textY);
 }
 
