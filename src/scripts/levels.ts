@@ -7,6 +7,7 @@ import { createEntity, Entity } from './entities.js';
 import { choose } from './random/choose.js';
 import { cardinalDirections } from './graph/grid.js';
 import { createHealthComponent } from './components/HealthComponent.js';
+import { Graph } from './graph/graph.js';
 
 export interface Level {
 	id: string;
@@ -111,6 +112,33 @@ export function getTilesInLevel(state: GameState, level: Level): Tile[] {
 
 export function getFreeTilesInLevel(state: GameState, level: Level): Tile[] {
 	return getTilesInLevel(state, level).filter(tile => !tile.entities.length);
+}
+
+export function createGraphFromLevel(state: GameState, level: Level): Graph {
+	const levelGraph = new Graph();
+	const tilesInLevel = getTilesInLevel(state, level);
+
+	tilesInLevel.forEach(tile => {
+		levelGraph.addNode(tile);
+	});
+
+	levelGraph.nodes.forEach(node => {
+		const neighbours = findSurroundingTiles(state, level, node.position);
+
+		neighbours.forEach(neighbour => {
+			levelGraph.addEdge(node, neighbour);
+		});
+	});
+
+	levelGraph.nodes.forEach(node => {
+		const entitiesOnTile = getEntitiesOnTile(state, node);
+
+		if (entitiesOnTile.some(entity => entity.isSolid && !entity.isActor)) {
+			levelGraph.removeNode(node);
+		}
+	});
+
+	return levelGraph;
 }
 
 export function generateLevel(state: GameState, size: Size, entrancePosition?: Position): Level {

@@ -1,5 +1,5 @@
 import { GameState, Position } from './types.js';
-import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevel, getFreeTilesInLevel } from './levels.js';
+import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getFreeTilesInLevel, createGraphFromLevel } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
 import { Entity, moveEntityToPosition, createEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
@@ -7,7 +7,6 @@ import { setupGame } from './utilities/setupGame.js';
 import { start } from './utilities/tick.js';
 import { getEntitiesOnTile, Tile } from './tiles.js';
 import { choose } from './random/choose.js';
-import { Graph } from './graph/graph.js';
 import { resolvePath } from './graph/resolvePath.js';
 import { aStar } from './graph/search/aStar.js';
 import { calculateManhattanDistance } from './graph/calculateManhattanDistance.js';
@@ -261,33 +260,6 @@ function decideActions(time: number, state: GameState): void {
 		nextActingEntity = findNextActingEntity(state);
 		continue;
 	}
-}
-
-function createGraphFromLevel(state: GameState, level: Level): Graph {
-	const levelGraph = new Graph();
-	const tilesInLevel = getTilesInLevel(state, level);
-
-	tilesInLevel.forEach(tile => {
-		levelGraph.addNode(tile);
-	});
-
-	levelGraph.nodes.forEach(node => {
-		const neighbours = findSurroundingTiles(state, level, node.position);
-
-		neighbours.forEach(neighbour => {
-			levelGraph.addEdge(node, neighbour);
-		});
-	});
-
-	levelGraph.nodes.forEach(node => {
-		const entitiesOnTile = getEntitiesOnTile(state, node);
-
-		if (entitiesOnTile.some(entity => entity.isSolid && !entity.isActor)) {
-			levelGraph.removeNode(node);
-		}
-	});
-
-	return levelGraph;
 }
 
 function actInDirection(state: GameState, entity: Entity, dx: number, dy: number): void {
