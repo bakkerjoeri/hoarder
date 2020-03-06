@@ -116,7 +116,7 @@ export function getTilesInLevel(state: GameState, level: Level): Tile[] {
 	return tileIds.map(tileId => getTile(state, tileId));
 }
 
-export function getFreeTilesInLevel(state: GameState, level: Level): Tile[] {
+export function getTilesInLevelWithoutEntities(state: GameState, level: Level): Tile[] {
 	return getTilesInLevel(state, level).filter(tile => !tile.entities.length);
 }
 
@@ -172,7 +172,7 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 		addEntityToLevel(state, createEntity(state, {
 			sprite: choose(['bookcase', 'bookcase', 'bookcase-low', 'bookcase-low', 'bookcase-low', 'bookcase-low-decorated', 'table']),
 			isSolid: true,
-		}), level, choose(getFreeTilesInLevel(state, level)).position);
+		}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
 	});
 
 	repeat(1, () => {
@@ -184,7 +184,7 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 			isSolid: true,
 			actionCost: 100,
 			health: createHealthComponent(2),
-		}), level, choose(getFreeTilesInLevel(state, level)).position);
+		}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
 	});
 
 	repeat(1, () => {
@@ -196,14 +196,14 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 			isSolid: true,
 			actionCost: 200,
 			health: createHealthComponent(4),
-		}), level, choose(getFreeTilesInLevel(state, level)).position);
+		}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
 	});
 
 
 	addEntityToLevel(state, createEntity(state, {
 		sprite: 'exit',
 		isExit: true,
-	}), level, choose(getFreeTilesInLevel(state, level)).position);
+	}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
 
 	return level;
 }

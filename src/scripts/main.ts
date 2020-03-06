@@ -1,5 +1,5 @@
 import { GameState, Position } from './types.js';
-import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getFreeTilesInLevel, createGraphFromLevel, findTileInLevelWithEntity } from './levels.js';
+import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevelWithoutEntities, createGraphFromLevel, findTileInLevelWithEntity } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
 import { Entity, moveEntityToPosition, createEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
@@ -92,7 +92,7 @@ if (entranceEntity) {
 		isItem: true,
 		cost: 2,
 		effect: 'summonFrog',
-	}), levelOne, choose(getFreeTilesInLevel(state, levelOne)).position);
+	}), levelOne, choose(getTilesInLevelWithoutEntities(state, levelOne)).position);
 }
 
 console.log(state);
@@ -458,7 +458,7 @@ function useItemInSlot(state: GameState, entity: Entity, slotIndex: number): voi
 
 	if (itemEntity.effect === 'summonFrog') {
 		const levelOfEntity = getLevel(state, entity.currentLevel);
-		const freeTiles = getFreeTilesInLevel(state, getLevel(state, entity.currentLevel));
+		const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, entity.currentLevel));
 
 		if (!freeTiles.length) {
 			return;
