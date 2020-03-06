@@ -1,5 +1,5 @@
 import { GameState, Position } from './types.js';
-import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getFreeTilesInLevel, createGraphFromLevel } from './levels.js';
+import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getFreeTilesInLevel, createGraphFromLevel, findTileInLevelWithEntity } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
 import { Entity, moveEntityToPosition, createEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
@@ -12,6 +12,9 @@ import { aStar } from './graph/search/aStar.js';
 import { calculateManhattanDistance } from './graph/calculateManhattanDistance.js';
 import { createHealthComponent } from './components/HealthComponent.js';
 import { spritesheet } from '../assets/spritesheet.js';
+import { floodFill } from './graph/floodFill.js';
+import { breadthFirstSearch } from './graph/search/breadthFirstSearch.js';
+import { ActorEntity } from './entities/ActorEntity.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -74,6 +77,7 @@ if (entranceEntity) {
 		sprite: 'hoarder',
 		isActor: true,
 		isPlayer: true,
+		isFriendly: true,
 		isSolid: true,
 		actionCost: 100,
 		health: createHealthComponent(5),
@@ -99,61 +103,65 @@ start((time: number) => {
 });
 
 window.addEventListener('keyup', (event: KeyboardEvent) => {
-	if (state.currentLevel) {
-		const playerEntity = findEntity(
-			getEntitiesInLevel(state, getLevel(state, state.currentLevel)),
-			{ isPlayer: true }
-		);
+	if (!state.currentLevel) {
+		return;
+	}
 
-		if (playerEntity) {
-			if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
-				actInDirection(state, playerEntity, 0, -1);
-			}
+	const playerEntityThatCanAct = findEntity(getEntitiesInLevel(state, getLevel(state, state.currentLevel)), {
+		isPlayer: true,
+		actionTicks: 0,
+	});
 
-			if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
-				actInDirection(state, playerEntity, 1, 0);
-			}
+	if (!playerEntityThatCanAct) {
+		return;
+	}
 
-			if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
-				actInDirection(state, playerEntity, 0, 1);
-			}
+	if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
+		actInDirection(state, playerEntityThatCanAct, 0, -1);
+	}
 
-			if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
-				actInDirection(state, playerEntity, -1, 0);
-			}
+	if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
+		actInDirection(state, playerEntityThatCanAct, 1, 0);
+	}
 
-			if (event.key === ' ' || event.key.toLowerCase() === 'e') {
-				performContextSensitiveAction(state, playerEntity);
-			}
+	if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
+		actInDirection(state, playerEntityThatCanAct, 0, 1);
+	}
 
-			if (event.key === 'q') {
-				eventBus.emit('concludeTurn', playerEntity, playerEntity.actionCost);
-			}
+	if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
+		actInDirection(state, playerEntityThatCanAct, -1, 0);
+	}
 
-			if (event.key === '1') {
-				useItemInSlot(state, playerEntity, 0);
-			}
+	if (event.key === ' ' || event.key.toLowerCase() === 'e') {
+		performContextSensitiveAction(state, playerEntityThatCanAct);
+	}
 
-			if (event.key === '2') {
-				useItemInSlot(state, playerEntity, 1);
-			}
+	if (event.key === 'q') {
+		eventBus.emit('concludeTurn', playerEntityThatCanAct, playerEntityThatCanAct.actionCost);
+	}
 
-			if (event.key === '3') {
-				useItemInSlot(state, playerEntity, 2);
-			}
+	if (event.key === '1') {
+		useItemInSlot(state, playerEntityThatCanAct, 0);
+	}
 
-			if (event.key === '4') {
-				useItemInSlot(state, playerEntity, 3);
-			}
+	if (event.key === '2') {
+		useItemInSlot(state, playerEntityThatCanAct, 1);
+	}
 
-			if (state.debugging && event.key.toLowerCase() === '[') {
-				showPreviousLevel();
-			}
+	if (event.key === '3') {
+		useItemInSlot(state, playerEntityThatCanAct, 2);
+	}
 
-			if (state.debugging && event.key.toLowerCase() === ']') {
-				showNextLevel();
-			}
-		}
+	if (event.key === '4') {
+		useItemInSlot(state, playerEntityThatCanAct, 3);
+	}
+
+	if (state.debugging && event.key.toLowerCase() === '[') {
+		showPreviousLevel();
+	}
+
+	if (state.debugging && event.key.toLowerCase() === ']') {
+		showNextLevel();
 	}
 });
 
@@ -206,19 +214,60 @@ function decideActions(time: number, state: GameState): void {
 	while (nextActingEntity) {
 		const currentActingEntity = nextActingEntity;
 
-		// Try to find a path to the player
-		const playerEntity = findEntity(getEntitiesInLevel(state, currentLevel), { isPlayer: true });
+		console.log(`${currentActingEntity.sprite} is gonna act.`);
+		// Find current closest target
+		// create a level graph
+		const levelGraph = createGraphFromLevel(state, currentLevel);
 
-		if (playerEntity) {
-			const levelGraph = createGraphFromLevel(state, currentLevel);
-			const nonPlayerTile = findTileInLevel(state, currentLevel, currentActingEntity.position);
-			const playerTile = findTileInLevel(state, currentLevel, playerEntity.position);
-			const path = resolvePath(nonPlayerTile, playerTile, aStar(levelGraph, nonPlayerTile, playerTile, (current: Tile, goal: Tile): number => {
-				return calculateManhattanDistance(current.position.x, current.position.y, goal.position.x, goal.position.y);
-			}));
+		// floodfill to find reachable tiles and filter by which contain opposing creatures
+		// Alternative: find tiles with opposing creatures and filter by whether they're in graph
+		const actingEntityTile = findTileInLevel(state, currentLevel, currentActingEntity.position);
+		const reachableTiles = floodFill(levelGraph, actingEntityTile) as Tile[];
 
-			if (path.length && path[0] === playerTile) {
-				attackEntity(playerEntity, currentActingEntity);
+		// find entities within those tiles that are of the opposite alliance
+		const possibleTargets = reachableTiles.reduce((targets: Entity[], tile): Entity[] => {
+			const targetsOnTile = findEntities(getEntitiesOnTile(state, tile, [currentActingEntity]), {
+				isFriendly: !!currentActingEntity.isEnemy,
+				isEnemy: !!currentActingEntity.isFriendly,
+			});
+			return [
+				...targets,
+				...targetsOnTile,
+			];
+		}, []);
+
+		console.log('Possible targets:', possibleTargets);
+
+		// find the closest of those targets
+		let pathLength = Infinity;
+
+		const closestTarget = possibleTargets.reduce((closestTarget: Entity | undefined, currentTarget) => {
+			const startTile = actingEntityTile
+			const goalTile = findTileInLevelWithEntity(state, currentLevel, currentTarget);
+			const pathToTarget = resolvePath(startTile, startTile, breadthFirstSearch(levelGraph, startTile, goalTile));
+
+			if (pathToTarget.length < pathLength) {
+				pathLength = pathToTarget.length;
+				return currentTarget;
+			}
+
+			return closestTarget;
+		}, undefined);
+
+		if (closestTarget) {
+			const targetEntity = closestTarget;
+			const targetEntityTile = findTileInLevelWithEntity(state, currentLevel, targetEntity);
+
+			const path = resolvePath(
+				actingEntityTile,
+				targetEntityTile,
+				aStar(levelGraph, actingEntityTile, targetEntityTile, (current: Tile, goal: Tile): number => {
+					return calculateManhattanDistance(current.position.x, current.position.y, goal.position.x, goal.position.y);
+				})
+			);
+
+			if (path.length && path[0] === targetEntityTile) {
+				attackEntity(targetEntity, currentActingEntity);
 				nextActingEntity = findNextActingEntity(state);
 				continue;
 			}
@@ -235,7 +284,7 @@ function decideActions(time: number, state: GameState): void {
 			}
 		}
 
-		// If no path found, just do something random
+		// If no path to a potential target could be found, just do something random
 		const surroundingTiles = findSurroundingTiles(state, currentLevel, currentActingEntity.position);
 
 		const tilesWithoutObstacles = surroundingTiles.filter(tile => {

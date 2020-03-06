@@ -65,6 +65,12 @@ export function findTileInLevel(state: GameState, level: Level, position: Positi
 	return getTile(state, level.tileSet[position.x][position.y]);
 }
 
+export function findTileInLevelWithEntity(state: GameState, level: Level, entity: Entity): Tile | undefined {
+	return getTilesInLevel(state, level).find(tile => {
+		return tile.entities.includes(entity.id);
+	});
+}
+
 export function findSurroundingTiles(state: GameState, level: Level, position: Position, directions = cardinalDirections): Tile[] {
 	const positionsInDirections = directions.map(direction => ({
 		x: position.x + direction[0],
