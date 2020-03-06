@@ -2,7 +2,6 @@ import { GameState, Position } from './types.js';
 import { Entity, getEntity } from './entities.js';
 import { createUuid } from './utilities/createUuid.js';
 import { arrayWithout } from './utilities/arrayWithout.js';
-import { getTilesInLevel } from './levels.js';
 
 export interface Tile {
 	id: string;

@@ -14,7 +14,6 @@ import { createHealthComponent } from './components/HealthComponent.js';
 import { spritesheet } from '../assets/spritesheet.js';
 import { floodFill } from './graph/floodFill.js';
 import { breadthFirstSearch } from './graph/search/breadthFirstSearch.js';
-import { ActorEntity } from './entities/ActorEntity.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
