@@ -5,7 +5,7 @@ import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
 import { PlayerEntity } from './entities/PlayerEntity.js';
 import { NonPlayerEntity } from './entities/NonPlayerEntity.js';
 import { repeat } from './utilities/repeat.js';
-import { color0, color1, color2, color4, color8  } from './../assets/colors.js';
+import { color0, color1, color2, color4, color8, color15 } from './../assets/colors.js';
 
 const imageCache: {
 	[path: string]: HTMLImageElement;
@@ -136,7 +136,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 						16,
 						8 * TILE_SIZE,
 						(3 + slotIndex) * TILE_SIZE + 22,
-						color1,
+						color2,
 					);
 
 					drawText(
@@ -154,7 +154,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 						16,
 						8 * TILE_SIZE + 28,
 						(3 + slotIndex) * TILE_SIZE + 40,
-						color1,
+						color2,
 					);
 				}
 			});
