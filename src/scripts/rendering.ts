@@ -4,6 +4,7 @@ import { GameState, Size, Position } from './types.js';
 import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
 import { PlayerEntity } from './entities/PlayerEntity.js';
 import { repeat } from './utilities/repeat.js';
+import { color0, color1, color2, color4, color8  } from './../assets/colors.js';
 
 const imageCache: {
 	[path: string]: HTMLImageElement;
@@ -54,20 +55,6 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 					entity.drawOffset,
 				);
 			}
-
-			if (state.debugging === true && entity.hasOwnProperty('health')) {
-				context.fillStyle = 'red';
-				context.fillRect(entity.position.x * TILE_SIZE, entity.position.y * TILE_SIZE, 15, 15);
-
-				drawText(
-					context,
-					entity.health.current.toString(),
-					12,
-					entity.position.x * TILE_SIZE + 4,
-					entity.position.y * TILE_SIZE + 11,
-					'white'
-				);
-			}
 		});
 
 		// Draw player UI
@@ -81,7 +68,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 				16,
 				7 * TILE_SIZE,
 				2 * TILE_SIZE + 44,
-				'white',
+				color1,
 			);
 
 			const inventoryEntities = playerEntity.inventory.map((entityId) => getEntity(state, entityId));
@@ -94,7 +81,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 					16,
 					8 * TILE_SIZE,
 					(3 + slotIndex) * TILE_SIZE + 4,
-					itemInSlot ? 'white' : 'gray',
+					itemInSlot ? color2 : color1,
 				);
 
 				if (itemInSlot) {
@@ -111,7 +98,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 						16,
 						8 * TILE_SIZE,
 						(3 + slotIndex) * TILE_SIZE + 22,
-						'white',
+						color1,
 					);
 
 					drawText(
@@ -120,7 +107,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 						16,
 						8 * TILE_SIZE,
 						(3 + slotIndex) * TILE_SIZE + 40,
-						'yellow',
+						color8,
 					);
 
 					drawText(
@@ -129,7 +116,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 						16,
 						8 * TILE_SIZE + 28,
 						(3 + slotIndex) * TILE_SIZE + 40,
-						'white',
+						color1,
 					);
 				}
 			});
@@ -142,7 +129,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 				16,
 				7 * TILE_SIZE,
 				0,
-				'red',
+				color4,
 			);
 
 			// Draw coins
@@ -152,7 +139,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 				16,
 				7 * TILE_SIZE,
 				18,
-				'yellow',
+				color8,
 			);
 		}
 	}
@@ -192,7 +179,7 @@ export function drawThing(context: CanvasRenderingContext2D, x: number, y: numbe
     context.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE - GAP, TILE_SIZE - GAP);
 }
 
-export function drawText(context: CanvasRenderingContext2D, text: string, size: number, textX: number, textY: number, color = 'black'): void {
+export function drawText(context: CanvasRenderingContext2D, text: string, size: number, textX: number, textY: number, color = color0): void {
 	context.fillStyle = color;
 	context.textBaseline = 'top';
     context.font = `${size}px monospace`;

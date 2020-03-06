@@ -12,6 +12,7 @@ import { resolvePath } from './graph/resolvePath.js';
 import { aStar } from './graph/search/aStar.js';
 import { calculateManhattanDistance } from './graph/calculateManhattanDistance.js';
 import { createHealthComponent } from './components/HealthComponent.js';
+import { spritesheet } from '../assets/spritesheet.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -30,17 +31,9 @@ const state: GameState = {
 	debugging: false,
 }
 
-addSprite(state, 'exit', 'src/assets/staircase.png', { width: 16, height: 16 });
-addSprite(state, 'entrance', 'src/assets/trapdoor.png', { width: 16, height: 16 });
-addSprite(state, 'hoarder', 'src/assets/hoarder.png', { width: 16, height: 16 });
-addSprite(state, 'bookcase', 'src/assets/bookcase.png', { width: 16, height: 16 });
-addSprite(state, 'bookcase-low', 'src/assets/bookcase-low.png', { width: 16, height: 16 });
-addSprite(state, 'bookcase-low-decorated', 'src/assets/bookcase-low-decorated.png', { width: 16, height: 16 });
-addSprite(state, 'table', 'src/assets/table.png', { width: 16, height: 16 });
-addSprite(state, 'skeleton', 'src/assets/skeleton.png', { width: 16, height: 16 });
-addSprite(state, 'skulls', 'src/assets/skulls.png', { width: 16, height: 16 });
-addSprite(state, 'witchhat', 'src/assets/witchhat.png', { width: 16, height: 16 });
-addSprite(state, 'frog', 'src/assets/frog.png', { width: 16, height: 16 });
+spritesheet.forEach((sprite) => {
+	addSprite(state, sprite.name, sprite.path, sprite.size, sprite.origin);
+});
 
 function findLevelExitPosition(state: GameState, level: Level): Position | undefined {
 	const exitObject = findEntity(getEntitiesInLevel(state, level), { isExit: true });
