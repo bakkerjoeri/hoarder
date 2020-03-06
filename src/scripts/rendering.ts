@@ -3,6 +3,7 @@ import { Entity, findEntities, findEntity, getEntity } from './entities.js';
 import { GameState, Size, Position } from './types.js';
 import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
 import { PlayerEntity } from './entities/PlayerEntity.js';
+import { NonPlayerEntity } from './entities/NonPlayerEntity.js';
 import { repeat } from './utilities/repeat.js';
 import { color0, color1, color2, color4, color8  } from './../assets/colors.js';
 
@@ -21,6 +22,7 @@ export const TILE_SIZE = 64;
 export const LEVEL_WIDTH = 7;
 export const LEVEL_HEIGHT = 7;
 export const GAP = TILE_SIZE / 16;
+export const SCALE = 4;
 
 export const GAME_WIDTH = 12 * TILE_SIZE;
 export const GAME_HEIGHT = LEVEL_HEIGHT * TILE_SIZE;
@@ -55,6 +57,42 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 					entity.drawOffset,
 				);
 			}
+		});
+
+		// Draw non-player entity health
+		const entitiesWithHealth = findEntities(entitiesInLevel, {
+			health: true,
+			position: true,
+		}) as NonPlayerEntity[];
+
+		entitiesWithHealth.forEach((entityWithHealth) => {
+			const maxHealth = entityWithHealth.health.max;
+			const currentHealth = entityWithHealth.health.current;
+
+			const fullHealthSprite = entityWithHealth.isEnemy ? getSprite(state, 'full-enemy-health') : getSprite(state, 'full-friendly-health');
+			const emptyHeartSprite = getSprite(state, 'empty-health');
+
+			repeat(currentHealth, (i) => {
+				drawSprite(
+					fullHealthSprite,
+					context, entityWithHealth.position!.x, entityWithHealth.position!.y,
+					{
+						x: (((i * 3) - 1) * SCALE),
+						y: (-fullHealthSprite.size.height) * SCALE,
+					}
+				);
+			});
+
+			repeat(maxHealth - currentHealth, (i) => {
+				drawSprite(
+					emptyHeartSprite,
+					context, entityWithHealth.position!.x, entityWithHealth.position!.y,
+					{
+						x: ((((i + currentHealth) * 3) - 1) * SCALE),
+						y: (-fullHealthSprite.size.height) * SCALE,
+					}
+				);
+			});
 		});
 
 		// Draw player UI
@@ -121,10 +159,9 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 				}
 			});
 
-			// Draw health
+			// Draw player health
 			drawText(
 				context,
-
 				`health: ${playerEntity.health.current}/${playerEntity.health.max}HP`,
 				16,
 				7 * TILE_SIZE,
@@ -170,7 +207,7 @@ export function drawSprite(sprite: Sprite, context: CanvasRenderingContext2D, x:
 		sprite.origin.x, sprite.origin.y,
 		sprite.size.width, sprite.size.height,
 		x * TILE_SIZE + offset.x, y * TILE_SIZE + offset.y,
-		TILE_SIZE, TILE_SIZE,
+		sprite.size.width * SCALE, sprite.size.height * SCALE,
 	);
 }
 

@@ -6,6 +6,7 @@ import { getRandomNumberInRange } from './random/getRandomNumberInRange.js';
 import { createEntity, Entity } from './entities.js';
 import { choose } from './random/choose.js';
 import { cardinalDirections } from './graph/grid.js';
+import { createHealthComponent } from './components/HealthComponent.js';
 
 export interface Level {
 	id: string;
@@ -145,12 +146,10 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 			sprite: 'skeleton',
 			isActor: true,
 			isNonPlayer: true,
+			isEnemy: true,
 			isSolid: true,
 			actionCost: 100,
-			health: {
-				current: 3,
-				max: 3,
-			},
+			health: createHealthComponent(2),
 		}), level, choose(getFreeTilesInLevel(state, level)).position);
 	});
 
@@ -159,12 +158,10 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 			sprite: 'skulls',
 			isActor: true,
 			isNonPlayer: true,
+			isEnemy: true,
 			isSolid: true,
 			actionCost: 200,
-			health: {
-				current: 5,
-				max: 5,
-			},
+			health: createHealthComponent(4),
 		}), level, choose(getFreeTilesInLevel(state, level)).position);
 	});
 

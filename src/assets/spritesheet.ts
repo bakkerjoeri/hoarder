@@ -67,4 +67,22 @@ export const spritesheet: Sprite[] = [
 		size: { width: 16, height: 16 },
 		origin: { x: 0, y: 0 },
 	},
+	{
+		name: 'full-friendly-health',
+		path: 'src/assets/sprites/health.png',
+		size: { width: 6, height: 6 },
+		origin: { x: 0, y: 0 },
+	},
+	{
+		name: 'full-enemy-health',
+		path: 'src/assets/sprites/health.png',
+		size: { width: 6, height: 6 },
+		origin: { x: 6, y: 0 },
+	},
+	{
+		name: 'empty-health',
+		path: 'src/assets/sprites/health.png',
+		size: { width: 6, height: 6 },
+		origin: { x: 12, y: 0 },
+	},
 ]
