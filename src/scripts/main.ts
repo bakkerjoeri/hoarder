@@ -19,14 +19,13 @@ import { createGochaponEggEntity } from './entities/GochaponEgg.js';
 import { pullRandomItem, useItem } from './items.js';
 import { ItemEntity } from './entities/ItemEntity.js';
 import { ActorEntity } from './entities/ActorEntity.js';
-import { arrayWithout } from './utilities/arrayWithout.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
-eventBus.on('update', update);
 eventBus.on('update', updateActionTicks);
 eventBus.on('update', decideActions);
 eventBus.on('concludeTurn', spendEnergy);
+eventBus.on('beforeDraw', updateDrawOffset);
 eventBus.on('beforeDraw', updateCoinSprite);
 eventBus.on('draw', draw);
 
@@ -175,27 +174,29 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 	}
 });
 
-function update(time: number, state: GameState): void {
-	if (state.currentLevel) {
-		const currentLevel = getLevel(state, state.currentLevel);
-		const entitiesInLevel = getEntitiesInLevel(state, currentLevel);
-
-		findEntities(entitiesInLevel, {
-			drawOffset: true
-		}).forEach((entity) => {
-			if (entity.drawOffset.x > 0) {
-				entity.drawOffset.x = Math.max(entity.drawOffset.x - 16, 0);
-			} else if (entity.drawOffset.x < 0) {
-				entity.drawOffset.x = Math.min(entity.drawOffset.x + 16, 0);
-			}
-
-			if (entity.drawOffset.y > 0) {
-				entity.drawOffset.y = Math.max(entity.drawOffset.y - 16, 0);
-			} else if (entity.drawOffset.y < 0) {
-				entity.drawOffset.y = Math.min(entity.drawOffset.y + 16, 0);
-			}
-		});
+function updateDrawOffset(time: number, state: GameState): void {
+	if (!state.currentLevel) {
+		return;
 	}
+
+	const currentLevel = getLevel(state, state.currentLevel);
+	const entitiesInLevel = getEntitiesInLevel(state, currentLevel);
+
+	findEntities(entitiesInLevel, {
+		drawOffset: true
+	}).forEach((entity) => {
+		if (entity.drawOffset.x > 0) {
+			entity.drawOffset.x = Math.max(entity.drawOffset.x - 16, 0);
+		} else if (entity.drawOffset.x < 0) {
+			entity.drawOffset.x = Math.min(entity.drawOffset.x + 16, 0);
+		}
+
+		if (entity.drawOffset.y > 0) {
+			entity.drawOffset.y = Math.max(entity.drawOffset.y - 16, 0);
+		} else if (entity.drawOffset.y < 0) {
+			entity.drawOffset.y = Math.min(entity.drawOffset.y + 16, 0);
+		}
+	});
 }
 
 function updateCoinSprite(time: number, state: GameState): void {
