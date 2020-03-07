@@ -18,7 +18,7 @@ type ComponentFilter = boolean | any | {
 	(value: any): boolean;
 };
 
-export function createEntity(state: GameState, components: any): Entity {
+export function addEntity(state: GameState, components: any): Entity {
     const entity = {
         id: components.id || createUuid(),
         ...components,

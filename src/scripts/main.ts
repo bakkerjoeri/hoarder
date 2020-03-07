@@ -1,7 +1,7 @@
 import { GameState, Position } from './types.js';
 import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevelWithoutEntities, createGraphFromLevel, findTileInLevelWithEntity } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
-import { Entity, moveEntityToPosition, createEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity } from './entities.js';
+import { Entity, moveEntityToPosition, addEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
 import { setupGame } from './utilities/setupGame.js';
 import { start } from './utilities/tick.js';
@@ -14,6 +14,8 @@ import { createHealthComponent } from './components/HealthComponent.js';
 import { spritesheet } from '../assets/spritesheet.js';
 import { floodFill } from './graph/floodFill.js';
 import { breadthFirstSearch } from './graph/search/breadthFirstSearch.js';
+import { createWitchHatEntity } from './entities/items/WitchHat.js';
+import { createHornetBoxEntity } from './entities/items/HornetBox.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -72,7 +74,7 @@ const entranceEntity = getEntitiesInLevel(state, levelOne).find((entity) => enti
 if (entranceEntity) {
 	const entranceTile = findTileInLevel(state, levelOne, entranceEntity.position);
 
-	addEntityToLevel(state, createEntity(state, {
+	addEntityToLevel(state, addEntity(state, {
 		sprite: 'hoarder',
 		isActor: true,
 		isPlayer: true,
@@ -84,14 +86,14 @@ if (entranceEntity) {
 		coins: 99,
 	}), levelOne, entranceTile.position);
 
-	addEntityToLevel(state, createEntity(state, {
-		sprite: 'witchhat',
-		name: 'witch\'s hat',
-		effectDescription: 'summon a frog buddy',
-		isItem: true,
-		cost: 2,
-		effect: 'summonFrog',
-	}), levelOne, choose(getTilesInLevelWithoutEntities(state, levelOne)).position);
+	addEntityToLevel(
+		state,
+		addEntity(state, createWitchHatEntity()),
+		levelOne,
+		choose(getTilesInLevelWithoutEntities(state, levelOne)).position
+	);
+
+	addEntityToLevel(state, addEntity(state, createHornetBoxEntity()), levelOne, choose(getTilesInLevelWithoutEntities(state, levelOne)).position);
 }
 
 console.log(state);
@@ -464,7 +466,7 @@ function useItemInSlot(state: GameState, entity: Entity, slotIndex: number): voi
 		}
 
 		const tileForFrog = choose(freeTiles);
-		addEntityToLevel(state, createEntity(state, {
+		addEntityToLevel(state, addEntity(state, {
 			sprite: 'frog',
 			isActor: true,
 			isNonPlayer: true,
@@ -473,6 +475,28 @@ function useItemInSlot(state: GameState, entity: Entity, slotIndex: number): voi
 			health: createHealthComponent(3),
 			actionCost: 100,
 		}), levelOfEntity, tileForFrog.position);
+
+		entity.coins = entity.coins - itemEntity.cost;
+	}
+
+	if (itemEntity.effect === 'summonHornet') {
+		const levelOfEntity = getLevel(state, entity.currentLevel);
+		const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, entity.currentLevel));
+
+		if (!freeTiles.length) {
+			return;
+		}
+
+		const tileForHornet = choose(freeTiles);
+		addEntityToLevel(state, addEntity(state, {
+			sprite: 'hornet',
+			isActor: true,
+			isNonPlayer: true,
+			isFriendly: true,
+			isSolid: true,
+			health: createHealthComponent(1),
+			actionCost: 100,
+		}), levelOfEntity, tileForHornet.position);
 
 		entity.coins = entity.coins - itemEntity.cost;
 	}

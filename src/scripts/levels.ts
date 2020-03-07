@@ -3,7 +3,7 @@ import { Tile, createTile, getTile, addEntityToTile, getEntitiesOnTile } from '.
 import { createUuid } from './utilities/createUuid.js';
 import { repeat } from './utilities/repeat.js';
 import { getRandomNumberInRange } from './random/getRandomNumberInRange.js';
-import { createEntity, Entity } from './entities.js';
+import { addEntity, Entity } from './entities.js';
 import { choose } from './random/choose.js';
 import { cardinalDirections } from './graph/grid.js';
 import { createHealthComponent } from './components/HealthComponent.js';
@@ -163,20 +163,20 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 		};
 	}
 
-	addEntityToLevel(state, createEntity(state, {
+	addEntityToLevel(state, addEntity(state, {
 		sprite: 'entrance',
 		isEntrance: true,
 	}), level, entrancePosition);
 
 	repeat(5, () => {
-		addEntityToLevel(state, createEntity(state, {
+		addEntityToLevel(state, addEntity(state, {
 			sprite: choose(['bookcase', 'bookcase', 'bookcase-low', 'bookcase-low', 'bookcase-low', 'bookcase-low-decorated', 'table']),
 			isSolid: true,
 		}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
 	});
 
 	repeat(1, () => {
-		addEntityToLevel(state, createEntity(state, {
+		addEntityToLevel(state, addEntity(state, {
 			sprite: 'skeleton',
 			isActor: true,
 			isNonPlayer: true,
@@ -188,7 +188,7 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 	});
 
 	repeat(1, () => {
-		addEntityToLevel(state, createEntity(state, {
+		addEntityToLevel(state, addEntity(state, {
 			sprite: 'skulls',
 			isActor: true,
 			isNonPlayer: true,
@@ -200,7 +200,7 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 	});
 
 
-	addEntityToLevel(state, createEntity(state, {
+	addEntityToLevel(state, addEntity(state, {
 		sprite: 'exit',
 		isExit: true,
 	}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
