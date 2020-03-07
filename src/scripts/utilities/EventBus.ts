@@ -1,3 +1,5 @@
+import { arrayWithout } from './arrayWithout.js';
+
 type EventHandler = (...args: any[]) => void;
 
 export class EventBus {
@@ -13,7 +15,14 @@ export class EventBus {
                 handler,
             ],
         };
-    }
+	}
+
+	remove(eventType: string, handler: EventHandler): void {
+		this.eventHandlers = {
+            ...this.eventHandlers,
+            [eventType]: arrayWithout(this.eventHandlers[eventType], handler),
+        };
+	}
 
     emit(eventType: string, ...args: any[]): void {
         if (!this.eventHandlers.hasOwnProperty(eventType)) {

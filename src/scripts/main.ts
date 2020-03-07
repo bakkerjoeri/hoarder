@@ -22,14 +22,18 @@ import { ActorEntity } from './entities/ActorEntity.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
-eventBus.on('update', updateActionTicks);
-eventBus.on('update', decideActions);
-eventBus.on('concludeTurn', spendEnergy);
-eventBus.on('beforeDraw', updateDrawOffset);
-eventBus.on('beforeDraw', updateCoinSprite);
+eventBus.on('start', startGame);
+eventBus.on('afterUpdate', updateScene);
+eventBus.on('startScene', handleStartScene);
+eventBus.on('endScene', handleEndScene);
 eventBus.on('draw', draw);
 
 const state: GameState = {
+	scene: {
+		current: 'run',
+		next: null,
+		history: [],
+	},
 	currentLevel: null,
     entities: {},
 	tiles: {},
@@ -42,6 +46,85 @@ spritesheet.forEach((sprite) => {
 	addSprite(state, sprite.name, sprite.path, sprite.size, sprite.origin);
 });
 
+
+function startGame(state: GameState): void {
+	eventBus.emit('startScene', state, state.scene.current);
+}
+
+function updateScene(time: number, state: GameState): void {
+	if (state.scene.next) {
+		const currentScene = state.scene.current;
+		const newScene = state.scene.next;
+
+		state.scene.current = newScene;
+		state.scene.next = null;
+		state.scene.history.push(currentScene);
+		eventBus.emit('endScene', state, currentScene);
+		eventBus.emit('startScene', state, newScene);
+	}
+}
+
+function switchScene(state: GameState, newSceneName: string): void {
+	if (state.scene.current === newSceneName) {
+		return;
+	}
+
+	state.scene.next = newSceneName;
+}
+
+function handleStartScene(state: GameState, sceneName: string): void {
+	if (sceneName === 'run') {
+		createRunScene(state);
+		eventBus.on('update', updateActionTicks);
+		eventBus.on('update', decideActions);
+		eventBus.on('concludeTurn', spendEnergy);
+		eventBus.on('beforeDraw', updateDrawOffset);
+		eventBus.on('beforeDraw', updateCoinSprite);
+	}
+}
+
+function handleEndScene(state: GameState, sceneName: string): void {
+	if (sceneName === 'run') {
+		eventBus.remove('update', updateActionTicks);
+		eventBus.remove('update', decideActions);
+		eventBus.remove('concludeTurn', spendEnergy);
+		eventBus.remove('beforeDraw', updateDrawOffset);
+		eventBus.remove('beforeDraw', updateCoinSprite);
+	}
+}
+
+function createRunScene(state: GameState): void {
+	const levelOne = generateLevel(state, { width: 7, height: 7 });
+	const levelTwo = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelOne));
+	const levelThree = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelTwo));
+	const levelFour = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelThree));
+	const levelFive = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelFour));
+	const levelSix = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelFive));
+	const levelSeven = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelSix));
+
+	state.currentRun = {
+		levels: [
+			levelOne.id,
+			levelTwo.id,
+			levelThree.id,
+			levelFour.id,
+			levelFive.id,
+			levelSix.id,
+			levelSeven.id,
+		],
+	};
+
+	state.currentLevel = levelOne.id;
+
+	const entranceEntity = getEntitiesInLevel(state, levelOne).find((entity) => entity.isEntrance);
+	if (entranceEntity) {
+		const entranceTile = findTileInLevel(state, levelOne, entranceEntity.position);
+		addEntityToLevel(state, addEntity(state, createPlayerEntity()), levelOne, entranceTile.position);
+	}
+
+	console.log(state);
+}
+
 function findLevelExitPosition(state: GameState, level: Level): Position | undefined {
 	const exitObject = findEntity(getEntitiesInLevel(state, level), { isExit: true });
 
@@ -52,41 +135,14 @@ function findLevelExitPosition(state: GameState, level: Level): Position | undef
 	return exitObject.position;
 }
 
-const levelOne = generateLevel(state, { width: 7, height: 7 });
-const levelTwo = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelOne));
-const levelThree = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelTwo));
-const levelFour = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelThree));
-const levelFive = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelFour));
-const levelSix = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelFive));
-const levelSeven = generateLevel(state, { width: 7, height: 7 }, findLevelExitPosition(state, levelSix));
-
-const run = {
-	levels: [
-		levelOne.id,
-		levelTwo.id,
-		levelThree.id,
-		levelFour.id,
-		levelFive.id,
-		levelSix.id,
-		levelSeven.id,
-	],
-}
-
-state.currentLevel = levelOne.id;
-
-const entranceEntity = getEntitiesInLevel(state, levelOne).find((entity) => entity.isEntrance);
-if (entranceEntity) {
-	const entranceTile = findTileInLevel(state, levelOne, entranceEntity.position);
-
-	addEntityToLevel(state, addEntity(state, createPlayerEntity()), levelOne, entranceTile.position);
-}
-
-console.log(state);
-
+eventBus.emit('start', state);
 start((time: number) => {
+	eventBus.emit('beforeUpdate', time, state);
 	eventBus.emit('update', time, state);
-    eventBus.emit('beforeDraw', time, state, context);
-    eventBus.emit('draw', time, state, context);
+	eventBus.emit('afterUpdate', time, state);
+    eventBus.emit('beforeDraw', time, state);
+	eventBus.emit('draw', time, state, context);
+    eventBus.emit('afterDraw', time, state);
 });
 
 window.addEventListener('keyup', (event: KeyboardEvent) => {
@@ -435,6 +491,10 @@ function attackEntity(state: GameState, target: Entity, source: Entity): void {
 		}
 
 		removeEntityFromLevel(state, target);
+
+		if (target.isPlayer) {
+			switchScene(state, 'gameOver');
+		}
 	}
 
 	eventBus.emit('concludeTurn', source, source.actionCost);
@@ -516,7 +576,11 @@ function performContextSensitiveAction(state: GameState, entity: Entity): void {
 }
 
 function exitLevel(state: GameState, entity: Entity): void {
-	const isCurrentLevelFinalLevel = run.levels.indexOf(entity.currentLevel) === run.levels.length - 1;
+	if (!state.currentRun) {
+		return;
+	}
+
+	const isCurrentLevelFinalLevel = state.currentRun.levels.indexOf(entity.currentLevel) === state.currentRun.levels.length - 1;
 
 	if (isCurrentLevelFinalLevel && entity.isPlayer) {
 		console.log('Victory!');
@@ -528,7 +592,7 @@ function exitLevel(state: GameState, entity: Entity): void {
 		return;
 	}
 
-	const nextLevel = getLevel(state, run.levels[run.levels.indexOf(entity.currentLevel) + 1]);
+	const nextLevel = getLevel(state, state.currentRun.levels[state.currentRun.levels.indexOf(entity.currentLevel) + 1]);
 	const entranceToLevel = findEntity(getEntitiesInLevel(state, nextLevel), { isEntrance: true, position: true });
 	if (entranceToLevel) {
 		moveEntityToLevel(state, entity, nextLevel, entranceToLevel.position);

@@ -14,9 +14,13 @@ export interface Position {
 }
 
 export interface GameState {
-	currentLevel: null|string;
+	scene: {
+		current: string;
+		next: null | string;
+		history: string[];
+	};
     entities: {
-        [entityId: string]: Entity;
+		[entityId: string]: Entity;
     };
 	tiles: {
 		[tileId: string]: Tile;
@@ -24,6 +28,10 @@ export interface GameState {
 	levels: {
 		[levelId: string]: Level;
 	};
+	currentRun?: {
+		levels: Level['id'][];
+	};
+	currentLevel: null | string;
 	sprites: {
 		[spriteName: string]: Sprite;
 	};

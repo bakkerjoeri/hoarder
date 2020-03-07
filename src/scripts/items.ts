@@ -29,7 +29,7 @@ const itemPool: Partial<ItemPool> = {
 	healingRing: createHealingRingEntity,
 	blackOpalPendant: createBlackOpalPendant,
 	fourSidedDie: createFourSidedDie,
-	// scrollOfFire: createScrollOfFire,
+	scrollOfFire: createScrollOfFire,
 }
 
 const itemEffects: ItemEffects = {
