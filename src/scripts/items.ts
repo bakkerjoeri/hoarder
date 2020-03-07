@@ -8,8 +8,14 @@ import { ActorEntity } from './entities/ActorEntity.js';
 import { GameState } from './types.js';
 import { createBlackOpalPendant, useBlackOpalPendant } from './entities/items/BlackOpalPendant.js';
 import { createFourSidedDie, useFourSidedDie } from './entities/items/FourSidedDie.js';
+import { createScrollOfFire, useScrollOfFire } from './entities/items/ScrollOfFire.js';
 
-export type ItemName = 'witchHat' | 'hornetBox' | 'healingRing' | 'blackOpalPendant' | 'fourSidedDie';
+export type ItemName = 'witchHat'
+	| 'hornetBox'
+	| 'healingRing'
+	| 'blackOpalPendant'
+	| 'fourSidedDie'
+	| 'scrollOfFire';
 
 interface CreateItem { (): ItemEntity }
 type ItemPool = { [item in ItemName]: CreateItem };
@@ -17,12 +23,22 @@ type ItemPool = { [item in ItemName]: CreateItem };
 interface UseItem { (state: GameState, user: ActorEntity): boolean }
 type ItemEffects = { [item in ItemName]: UseItem };
 
-const itemPool: ItemPool = {
+const itemPool: Partial<ItemPool> = {
 	witchHat: createWitchHatEntity,
 	hornetBox: createHornetBoxEntity,
 	healingRing: createHealingRingEntity,
 	blackOpalPendant: createBlackOpalPendant,
 	fourSidedDie: createFourSidedDie,
+	// scrollOfFire: createScrollOfFire,
+}
+
+const itemEffects: ItemEffects = {
+	witchHat: useWitchHat,
+	hornetBox: useHornetBox,
+	healingRing: useHealingRing,
+	blackOpalPendant: useBlackOpalPendant,
+	fourSidedDie: useFourSidedDie,
+	scrollOfFire: useScrollOfFire,
 }
 
 let availableItems: ItemName[] = [];
@@ -38,14 +54,6 @@ export function pullRandomItem(): ItemEntity {
 	availableItems = arrayWithout(availableItems, itemName);
 
 	return itemCreateFunction();
-}
-
-const itemEffects: ItemEffects = {
-	witchHat: useWitchHat,
-	hornetBox: useHornetBox,
-	healingRing: useHealingRing,
-	blackOpalPendant: useBlackOpalPendant,
-	fourSidedDie: useFourSidedDie,
 }
 
 export function useItem(state: GameState, item: ItemName, user: ActorEntity): boolean {

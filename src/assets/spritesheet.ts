@@ -187,4 +187,10 @@ export const spritesheet: Sprite[] = [
 		size: { width: 16, height: 16 },
 		origin: { x: 0, y: 0 },
 	},
+	{
+		name: 'firescroll',
+		path: 'src/assets/sprites/firescroll.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 0, y: 0 },
+	},
 ]
