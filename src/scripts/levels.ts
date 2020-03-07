@@ -3,11 +3,15 @@ import { Tile, createTile, getTile, addEntityToTile, getEntitiesOnTile } from '.
 import { createUuid } from './utilities/createUuid.js';
 import { repeat } from './utilities/repeat.js';
 import { getRandomNumberInRange } from './random/getRandomNumberInRange.js';
-import { addEntity, Entity } from './entities.js';
+import { addEntity, Entity, ComponentFilterMap, doesEntityValueMatch } from './entities.js';
 import { choose } from './random/choose.js';
 import { cardinalDirections } from './graph/grid.js';
 import { createHealthComponent } from './components/HealthComponent.js';
 import { Graph } from './graph/graph.js';
+import { createGochaponMachineEntity } from './entities/GochaponMachine.js';
+import { floodFill } from './graph/floodFill.js';
+import { breadthFirstSearch } from './graph/search/breadthFirstSearch.js';
+import { resolvePath } from './graph/resolvePath.js';
 
 export interface Level {
 	id: string;
@@ -84,6 +88,24 @@ export function findSurroundingTiles(state: GameState, level: Level, position: P
 	return existingPositions.map(existingPosition => findTileInLevel(state, level, existingPosition));
 }
 
+export function findNearestEmptyTile(state: GameState, level: Level, position: Position): Tile | undefined {
+	const levelGraph = createGraphFromLevel(state, level);
+	const startTile = findTileInLevel(state, level, position);
+	const graphSearchResults = breadthFirstSearch(levelGraph, startTile, (tile: Tile) => {
+		return !getEntitiesOnTile(state, tile).some(entity => entity.isSolid);
+	});
+
+	const emptySearchResult = Array.from(graphSearchResults).find(searchResult => {
+		return getEntitiesOnTile(state, searchResult[0]).every(entity => !entity.isSolid);
+	})
+
+	if (!emptySearchResult || !emptySearchResult.length) {
+		return;
+	}
+
+	return emptySearchResult[0];
+}
+
 export function getEntitiesInLevel(state: GameState, level: Level): Entity[] {
 	const tilesInLevel = getTilesInLevel(state, level);
 
@@ -120,7 +142,7 @@ export function getTilesInLevelWithoutEntities(state: GameState, level: Level): 
 	return getTilesInLevel(state, level).filter(tile => !tile.entities.length);
 }
 
-export function createGraphFromLevel(state: GameState, level: Level): Graph {
+export function createGraphFromLevel(state: GameState, level: Level, filter?: (entity: Entity) => boolean): Graph {
 	const levelGraph = new Graph();
 	const tilesInLevel = getTilesInLevel(state, level);
 
@@ -136,13 +158,15 @@ export function createGraphFromLevel(state: GameState, level: Level): Graph {
 		});
 	});
 
-	levelGraph.nodes.forEach(node => {
-		const entitiesOnTile = getEntitiesOnTile(state, node);
+	if (filter) {
+		levelGraph.nodes.forEach(node => {
+			const entitiesOnTile = getEntitiesOnTile(state, node);
 
-		if (entitiesOnTile.some(entity => entity.isSolid && !entity.isActor)) {
-			levelGraph.removeNode(node);
-		}
-	});
+			if (entitiesOnTile.some(entity => !filter(entity))) {
+				levelGraph.removeNode(node);
+			}
+		});
+	}
 
 	return levelGraph;
 }
@@ -199,6 +223,15 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 			health: createHealthComponent(4),
 			coins: 4,
 		}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
+	});
+
+	repeat(1, () => {
+		addEntityToLevel(
+			state,
+			addEntity(state, createGochaponMachineEntity()),
+			level,
+			choose(getTilesInLevelWithoutEntities(state, level)).position
+		);
 	});
 
 

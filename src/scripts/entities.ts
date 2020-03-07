@@ -10,11 +10,11 @@ export interface Entity {
     [componentName: string]: Component;
 }
 
-interface ComponentFilterMap {
+export interface ComponentFilterMap {
 	[componentName: string]: ComponentFilter;
 }
 
-type ComponentFilter = boolean | any | {
+export type ComponentFilter = boolean | any | {
 	(value: any): boolean;
 };
 
@@ -61,7 +61,7 @@ export function findEntity(entities: Entity[], filters: ComponentFilterMap): Ent
 	});
 }
 
-function doesEntityValueMatch(entity: Entity, filters: ComponentFilterMap): boolean {
+export function doesEntityValueMatch(entity: Entity, filters: ComponentFilterMap): boolean {
 	return Object.entries(filters).every(([componentName, filterValue]) => {
 		if (typeof filterValue === 'function' && entity.hasOwnProperty(componentName)) {
 			return filterValue(entity[componentName]);

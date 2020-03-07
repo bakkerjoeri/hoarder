@@ -121,4 +121,52 @@ export const spritesheet: Sprite[] = [
 		size: { width: 16, height: 16 },
 		origin: { x: 48, y: 0 },
 	},
+	{
+		name: 'gochapon-machine',
+		path: 'src/assets/sprites/gochapon.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 0, y: 0 },
+	},
+	{
+		name: 'gochapon-egg-1',
+		path: 'src/assets/sprites/gochapon-egg.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 0, y: 0 },
+	},
+	{
+		name: 'gochapon-egg-2',
+		path: 'src/assets/sprites/gochapon-egg.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 16, y: 0 },
+	},
+	{
+		name: 'gochapon-egg-3',
+		path: 'src/assets/sprites/gochapon-egg.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 32, y: 0 },
+	},
+	{
+		name: 'gochapon-egg-4',
+		path: 'src/assets/sprites/gochapon-egg.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 48, y: 0 },
+	},
+	{
+		name: 'gochapon-egg-5',
+		path: 'src/assets/sprites/gochapon-egg.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 64, y: 0 },
+	},
+	{
+		name: 'gochapon-egg-6',
+		path: 'src/assets/sprites/gochapon-egg.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 80, y: 0 },
+	},
+	{
+		name: 'gochapon-egg-6',
+		path: 'src/assets/sprites/gochapon-egg.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 96, y: 0 },
+	},
 ]

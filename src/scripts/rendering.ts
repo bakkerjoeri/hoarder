@@ -5,7 +5,6 @@ import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
 import { PlayerEntity } from './entities/actors/Player.js';
 import { repeat } from './utilities/repeat.js';
 import { color0, color1, color2, color4, color8 } from './../assets/colors.js';
-import { ActorEntity } from './entities/ActorEntity.js';
 
 const imageCache: {
 	[path: string]: HTMLImageElement;
@@ -63,7 +62,8 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 		const entitiesWithHealth = findEntities(entitiesInLevel, {
 			health: true,
 			position: true,
-		}) as ActorEntity[];
+			hideHealth: false,
+		});
 
 		entitiesWithHealth.forEach((entityWithHealth) => {
 			const maxHealth = entityWithHealth.health.max;

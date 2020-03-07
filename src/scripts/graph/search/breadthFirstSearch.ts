@@ -1,7 +1,7 @@
 import { Graph } from './../graph.js';
 import { Node, GraphSearchResults, GraphSearchResult } from './../types.js';
 
-export function breadthFirstSearch(graph: Graph, start: Node, goal: Node): GraphSearchResults {
+export function breadthFirstSearch(graph: Graph, start: Node, goal: Node | ((node: Node) => boolean)): GraphSearchResults {
     if (!graph.nodes.includes(start)) {
         throw new Error('Starting node was not found in graph.');
     }
@@ -17,7 +17,10 @@ export function breadthFirstSearch(graph: Graph, start: Node, goal: Node): Graph
     while(frontier.length) {
         const currentNode = frontier.shift();
 
-        if (currentNode === goal) {
+        if (
+			(typeof goal === 'function' && goal(currentNode)) ||
+			(currentNode === goal)
+		) {
             break;
         }
 

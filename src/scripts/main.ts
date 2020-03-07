@@ -1,5 +1,5 @@
 import { GameState, Position } from './types.js';
-import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevelWithoutEntities, createGraphFromLevel, findTileInLevelWithEntity } from './levels.js';
+import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevelWithoutEntities, createGraphFromLevel, findTileInLevelWithEntity, findNearestEmptyTile } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
 import { Entity, moveEntityToPosition, addEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity, getEntities } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
@@ -10,7 +10,6 @@ import { choose } from './random/choose.js';
 import { resolvePath } from './graph/resolvePath.js';
 import { aStar } from './graph/search/aStar.js';
 import { calculateManhattanDistance } from './graph/calculateManhattanDistance.js';
-import { createHealthComponent } from './components/HealthComponent.js';
 import { spritesheet } from '../assets/spritesheet.js';
 import { floodFill } from './graph/floodFill.js';
 import { breadthFirstSearch } from './graph/search/breadthFirstSearch.js';
@@ -21,6 +20,8 @@ import { repeat } from './utilities/repeat.js';
 import { createHornetEntity } from './entities/actors/Hornet.js';
 import { createFrogEntity } from './entities/actors/Frog.js';
 import { createPlayerEntity } from './entities/actors/Player.js';
+import { createGochaponEggEntity } from './entities/GochaponEgg.js';
+import { ItemEntity } from './entities/ItemEntity.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -256,7 +257,9 @@ function decideActions(time: number, state: GameState): void {
 
 		// Find current closest target
 		// create a level graph
-		const levelGraph = createGraphFromLevel(state, currentLevel);
+		const levelGraph = createGraphFromLevel(state, currentLevel, (entity) => {
+			return !entity.isSolid || entity.isActor;
+		});
 
 		// floodfill to find reachable tiles and filter by which contain opposing creatures
 		// Alternative: find tiles with opposing creatures and filter by whether they're in graph
@@ -303,18 +306,19 @@ function decideActions(time: number, state: GameState): void {
 			);
 
 			if (path.length && path[0] === targetEntityTile) {
-				attackEntity(targetEntity, currentActingEntity);
+				attackEntity(state, targetEntity, currentActingEntity);
 				nextActingEntity = findNextActingEntity(state);
 				continue;
 			}
 
 			if (path.length && getEntitiesOnTile(state, path[0]).every((entity: Entity) => !entity.isSolid)) {
-				actInDirection(
+				moveEntityInDirection(
 					state,
 					currentActingEntity,
 					path[0].position.x - currentActingEntity.position.x,
 					path[0].position.y - currentActingEntity.position.y
 				);
+				eventBus.emit('concludeTurn', currentActingEntity, currentActingEntity.actionCost);
 				nextActingEntity = findNextActingEntity(state);
 				continue;
 			}
@@ -336,12 +340,13 @@ function decideActions(time: number, state: GameState): void {
 
 		const targetTile = choose(tilesWithoutObstacles);
 
-		actInDirection(
+		moveEntityInDirection(
 			state,
 			currentActingEntity,
 			targetTile.position.x - currentActingEntity.position.x,
 			targetTile.position.y - currentActingEntity.position.y
 		);
+		eventBus.emit('concludeTurn', currentActingEntity, currentActingEntity.actionCost);
 		nextActingEntity = findNextActingEntity(state);
 		continue;
 	}
@@ -361,41 +366,97 @@ function actInDirection(state: GameState, entity: Entity, dx: number, dy: number
     const nextTile = findTileInLevel(state, level, nextPosition);
     const entitiesOnNextTile = getEntitiesOnTile(state, nextTile);
 
-    if (entitiesOnNextTile.some(entity => entity.isSolid && !entity.hasOwnProperty('health'))) {
-        return;
-    }
-
     const attackableEntity = entitiesOnNextTile.find(entity => entity.hasOwnProperty('health'));
-
     if (attackableEntity) {
-		attackEntity(attackableEntity, entity);
+		attackEntity(state, attackableEntity, entity);
 		return;
 	}
 
-	moveEntityToPosition(state, entity, nextPosition);
-	entity.drawOffset = {
-		x: -1 * dx * TILE_SIZE,
-		y: -1 * dy * TILE_SIZE,
+	const gochaponMachineEntity = entitiesOnNextTile.find(entity => entity.isGochaponMachine);
+    if (gochaponMachineEntity) {
+		// pay the machine
+		if (entity.coins < gochaponMachineEntity.cost) {
+			return;
+		}
+
+		// the machine should spawn an egg somewhere
+		const spawnTile = findNearestEmptyTile(state, level, entity.position);
+
+		if (!spawnTile) {
+			return;
+		}
+
+		entity.coins = entity.coins - gochaponMachineEntity.cost;
+		const gochaponEggContents = createRandomGochaponItem();
+
+		if (!gochaponEggContents) {
+			return;
+		}
+		addEntity(state, gochaponEggContents);
+		addEntityToLevel(state, addEntity(state, createGochaponEggEntity(gochaponEggContents.id)), level, spawnTile.position);
+
+		return;
 	}
 
+	if (entitiesOnNextTile.some(entity => entity.isSolid)) {
+		return;
+	}
+
+	moveEntityInDirection(state, entity, dx, dy);
 	eventBus.emit('concludeTurn', entity, entity.actionCost);
 	return;
 }
 
-function attackEntity(target: Entity, source: Entity): void {
+function createRandomGochaponItem(): ItemEntity | undefined {
+	const itemName = choose(['hornetbox', 'witchhat']);
+
+	if (itemName === 'hornetbox') {
+		return createHornetBoxEntity();
+	}
+
+	if (itemName === 'witchhat') {
+		return createWitchHatEntity();
+	}
+}
+
+function moveEntityInDirection(state: GameState, entity: Entity, dx: number, dy: number): void {
+	const nextPosition: Position = {
+		x: (entity.position.x as number) + dx,
+		y: (entity.position.y as number) + dy,
+	};
+
+	moveEntityToPosition(state, entity, nextPosition);
+		entity.drawOffset = {
+			x: -1 * dx * TILE_SIZE,
+			y: -1 * dy * TILE_SIZE,
+		}
+}
+
+function attackEntity(state: GameState, target: Entity, source: Entity): void {
 	target.health.current -= 1;
 
-	if (target.isEnemy === source.isEnemy) {
+	if (!target.isPlayer && target.isEnemy === source.isEnemy) {
 		target.isEnemy = !target.isEnemy;
 	}
 
 	if (target.health.current === 0) {
-		dropCoins(state, target, target.position, target.coins);
+		if (target.hasOwnProperty('coins') && target.coins > 0) {
+			dropCoins(state, target, target.position, target.coins);
+		}
+
+		if (target.hasOwnProperty('hasItem')) {
+			addEntityToLevel(
+				state,
+				getEntity(state, target.hasItem),
+				getLevel(state, target.currentLevel),
+				target.position
+			);
+		}
+
 		removeEntityFromLevel(state, target);
 	}
 
 	eventBus.emit('concludeTurn', source, source.actionCost);
-
 }
 
 function spendEnergy(entity: Entity, energy: number): void {
@@ -452,9 +513,10 @@ function performContextSensitiveAction(state: GameState, entity: Entity): void {
 	const currentLevel = getLevel(state, entity.currentLevel);
 	const entitiesOnTile = getEntitiesOnTile(state, findTileInLevel(state, currentLevel, entity.position), [entity]);
 
-	const exitEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isExit)
-	if (exitEntity) {
-		exitLevel(state, entity);
+	const pileOfCoinsEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isPileOfCoins);
+	if (pileOfCoinsEntity) {
+		entity.coins = entity.coins + pileOfCoinsEntity.amount;
+		removeEntityFromLevel(state, pileOfCoinsEntity);
 		return;
 	}
 
@@ -465,10 +527,9 @@ function performContextSensitiveAction(state: GameState, entity: Entity): void {
 		return;
 	}
 
-	const pileOfCoinsEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isPileOfCoins);
-	if (pileOfCoinsEntity) {
-		entity.coins = entity.coins + pileOfCoinsEntity.amount;
-		removeEntityFromLevel(state, pileOfCoinsEntity);
+	const exitEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isExit)
+	if (exitEntity) {
+		exitLevel(state, entity);
 		return;
 	}
 }

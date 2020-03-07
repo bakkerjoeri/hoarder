@@ -3,7 +3,7 @@ import { Entity } from './../entities.js';
 import { createUuid } from './../utilities/createUuid.js';
 import { createHealthComponent } from '../components/HealthComponent.js';
 
-export function createGochaponEggEntity(withItem: string): Entity {
+export function createGochaponEggEntity(hasItem: string): Entity {
 	return {
 		id: createUuid(),
 		sprite: choose([
@@ -13,11 +13,10 @@ export function createGochaponEggEntity(withItem: string): Entity {
 			'gochapon-egg-4',
 			'gochapon-egg-5',
 			'gochapon-egg-6',
-			'gochapon-egg-7',
 		]),
 		isSolid: true,
 		health: createHealthComponent(1),
 		hideHealth: true,
-		containsItem: withItem,
+		hasItem: hasItem,
 	}
 }
