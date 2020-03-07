@@ -128,11 +128,6 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 		performContextSensitiveAction(state, playerEntityThatCanAct);
 	}
 
-	if (event.key === 'q') {
-		event.preventDefault();
-		eventBus.emit('concludeTurn', playerEntityThatCanAct, playerEntityThatCanAct.actionCost);
-	}
-
 	if (event.keyCode === 49 && !event.shiftKey) { // 1
 		event.preventDefault();
 		useItemInSlot(state, playerEntityThatCanAct, 0);
@@ -507,7 +502,7 @@ function performContextSensitiveAction(state: GameState, entity: Entity): void {
 	}
 
 	const itemEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isItem);
-	if (itemEntity) {
+	if (itemEntity && entity.inventory.length < 4) {
 		entity.inventory.push(itemEntity.id);
 		removeEntityFromLevel(state, itemEntity);
 		return;

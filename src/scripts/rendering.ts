@@ -199,7 +199,7 @@ export function drawSprite(sprite: Sprite, context: CanvasRenderingContext2D, x:
 
 export function drawTile(context: CanvasRenderingContext2D, x: number, y: number, color: string): void {
     context.fillStyle = color;
-    context.fillRect(x * TILE_SIZE + (TILE_SIZE / 2) - 2, y * TILE_SIZE + (TILE_SIZE / 2) - 2, 4, 4);
+    context.fillRect(x * TILE_SIZE + (TILE_SIZE / 2) - 4, y * TILE_SIZE + (TILE_SIZE / 2) - 4, 4, 4);
 }
 
 export function drawText(context: CanvasRenderingContext2D, text: string, size: number, textX: number, textY: number, color = color0): void {

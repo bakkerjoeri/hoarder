@@ -6,8 +6,10 @@ import { createWitchHatEntity, useWitchHat } from './entities/items/WitchHat.js'
 import { createHealingRingEntity, useHealingRing  } from './entities/items/HealingRing.js';
 import { ActorEntity } from './entities/ActorEntity.js';
 import { GameState } from './types.js';
+import { createBlackOpalPendant, useBlackOpalPendant } from './entities/items/BlackOpalPendant.js';
+import { createFourSidedDie, useFourSidedDie } from './entities/items/FourSidedDie.js';
 
-export type ItemName = 'witchHat' | 'hornetBox' | 'healingRing';
+export type ItemName = 'witchHat' | 'hornetBox' | 'healingRing' | 'blackOpalPendant' | 'fourSidedDie';
 
 interface CreateItem { (): ItemEntity }
 type ItemPool = { [item in ItemName]: CreateItem };
@@ -19,6 +21,8 @@ const itemPool: ItemPool = {
 	witchHat: createWitchHatEntity,
 	hornetBox: createHornetBoxEntity,
 	healingRing: createHealingRingEntity,
+	blackOpalPendant: createBlackOpalPendant,
+	fourSidedDie: createFourSidedDie,
 }
 
 let availableItems: ItemName[] = [];
@@ -40,6 +44,8 @@ const itemEffects: ItemEffects = {
 	witchHat: useWitchHat,
 	hornetBox: useHornetBox,
 	healingRing: useHealingRing,
+	blackOpalPendant: useBlackOpalPendant,
+	fourSidedDie: useFourSidedDie,
 }
 
 export function useItem(state: GameState, item: ItemName, user: ActorEntity): boolean {

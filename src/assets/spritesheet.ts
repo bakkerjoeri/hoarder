@@ -175,4 +175,16 @@ export const spritesheet: Sprite[] = [
 		size: { width: 16, height: 16 },
 		origin: { x: 0, y: 0 },
 	},
+	{
+		name: 'black-opal-pendant',
+		path: 'src/assets/sprites/black-opal-pendant.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 0, y: 0 },
+	},
+	{
+		name: 'd4',
+		path: 'src/assets/sprites/d4.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 0, y: 0 },
+	},
 ]
