@@ -7,6 +7,6 @@ export function createGochaponMachineEntity(): Entity {
 		isGochaponMachine: true,
 		sprite: 'gochapon-machine',
 		isSolid: true,
-		cost: 3,
+		cost: 2,
 	}
 }
