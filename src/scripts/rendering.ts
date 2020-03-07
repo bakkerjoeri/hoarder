@@ -33,7 +33,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 		const currentLevel = getLevel(state, state.currentLevel);
 
 		getTilesInLevel(state, currentLevel).forEach((tile: Tile) => {
-			drawThing(context, tile.position.x, tile.position.y, '#222');
+			drawTile(context, tile.position.x, tile.position.y, color1);
 		});
 
 		const entitiesInLevel = getEntitiesInLevel(state, currentLevel);
@@ -43,10 +43,6 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 		});
 
 		entitiesToDraw.forEach((entity: Entity) => {
-			if (entity.hasOwnProperty('color')) {
-				drawThing(context, entity.position.x, entity.position.y, entity.color);
-			}
-
 			if (entity.hasOwnProperty('sprite')) {
 				drawSprite(
 					getSprite(state, entity.sprite),
@@ -201,9 +197,9 @@ export function drawSprite(sprite: Sprite, context: CanvasRenderingContext2D, x:
 	);
 }
 
-export function drawThing(context: CanvasRenderingContext2D, x: number, y: number, color: string): void {
+export function drawTile(context: CanvasRenderingContext2D, x: number, y: number, color: string): void {
     context.fillStyle = color;
-    context.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE - GAP, TILE_SIZE - GAP);
+    context.fillRect(x * TILE_SIZE + (TILE_SIZE / 2) - 2, y * TILE_SIZE + (TILE_SIZE / 2) - 2, 4, 4);
 }
 
 export function drawText(context: CanvasRenderingContext2D, text: string, size: number, textX: number, textY: number, color = color0): void {
