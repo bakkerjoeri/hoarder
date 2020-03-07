@@ -159,23 +159,13 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 				}
 			});
 
-			// Draw player health
-			drawText(
-				context,
-				`health: ${playerEntity.health.current}/${playerEntity.health.max}HP`,
-				16,
-				7 * TILE_SIZE,
-				0,
-				color4,
-			);
-
 			// Draw coins
 			drawText(
 				context,
 				`coins: ${playerEntity.coins}¢`,
 				16,
 				7 * TILE_SIZE,
-				18,
+				0,
 				color8,
 			);
 		}

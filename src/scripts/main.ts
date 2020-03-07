@@ -13,15 +13,12 @@ import { calculateManhattanDistance } from './graph/calculateManhattanDistance.j
 import { spritesheet } from '../assets/spritesheet.js';
 import { floodFill } from './graph/floodFill.js';
 import { breadthFirstSearch } from './graph/search/breadthFirstSearch.js';
-import { createWitchHatEntity } from './entities/items/WitchHat.js';
-import { createHornetBoxEntity } from './entities/items/HornetBox.js';
 import { createPileOfCoinsEntity, getSpriteNameForCoinAmount } from './entities/PileOfCoins.js';
-import { repeat } from './utilities/repeat.js';
 import { createHornetEntity } from './entities/actors/Hornet.js';
 import { createFrogEntity } from './entities/actors/Frog.js';
 import { createPlayerEntity } from './entities/actors/Player.js';
 import { createGochaponEggEntity } from './entities/GochaponEgg.js';
-import { ItemEntity } from './entities/ItemEntity.js';
+import { pullRandomItem } from './itemPool.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -82,29 +79,6 @@ if (entranceEntity) {
 	const entranceTile = findTileInLevel(state, levelOne, entranceEntity.position);
 
 	addEntityToLevel(state, addEntity(state, createPlayerEntity()), levelOne, entranceTile.position);
-
-	repeat(5, (amount) => {
-		addEntityToLevel(
-			state,
-			addEntity(state, createPileOfCoinsEntity(amount)),
-			levelOne,
-			choose(getTilesInLevelWithoutEntities(state, levelOne)).position
-		);
-	})
-
-	addEntityToLevel(
-		state,
-		addEntity(state, createWitchHatEntity()),
-		levelOne,
-		choose(getTilesInLevelWithoutEntities(state, levelOne)).position
-	);
-
-	addEntityToLevel(
-		state,
-		addEntity(state, createHornetBoxEntity()),
-		levelOne,
-		choose(getTilesInLevelWithoutEntities(state, levelOne)).position
-	);
 }
 
 console.log(state);
@@ -387,11 +361,7 @@ function actInDirection(state: GameState, entity: Entity, dx: number, dy: number
 		}
 
 		entity.coins = entity.coins - gochaponMachineEntity.cost;
-		const gochaponEggContents = createRandomGochaponItem();
-
-		if (!gochaponEggContents) {
-			return;
-		}
+		const gochaponEggContents = pullRandomItem();
 		addEntity(state, gochaponEggContents);
 		addEntityToLevel(state, addEntity(state, createGochaponEggEntity(gochaponEggContents.id)), level, spawnTile.position);
 
@@ -405,18 +375,6 @@ function actInDirection(state: GameState, entity: Entity, dx: number, dy: number
 	moveEntityInDirection(state, entity, dx, dy);
 	eventBus.emit('concludeTurn', entity, entity.actionCost);
 	return;
-}
-
-function createRandomGochaponItem(): ItemEntity | undefined {
-	const itemName = choose(['hornetbox', 'witchhat']);
-
-	if (itemName === 'hornetbox') {
-		return createHornetBoxEntity();
-	}
-
-	if (itemName === 'witchhat') {
-		return createWitchHatEntity();
-	}
 }
 
 function moveEntityInDirection(state: GameState, entity: Entity, dx: number, dy: number): void {

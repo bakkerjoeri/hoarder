@@ -19,6 +19,6 @@ export function createPlayerEntity(): PlayerEntity {
 		actionCost: 100,
 		health: createHealthComponent(5),
 		inventory: [],
-		coins: 99,
+		coins: 0,
 	}
 }
