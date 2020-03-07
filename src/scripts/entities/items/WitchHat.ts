@@ -1,5 +1,5 @@
-import { ItemEntity } from '../ItemEntity';
-import { createUuid } from '../../utilities/createUuid';
+import { ItemEntity } from '../ItemEntity.js';
+import { createUuid } from '../../utilities/createUuid.js';
 
 export function createWitchHatEntity(): ItemEntity {
 	return {
