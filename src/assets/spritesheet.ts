@@ -169,4 +169,10 @@ export const spritesheet: Sprite[] = [
 		size: { width: 16, height: 16 },
 		origin: { x: 96, y: 0 },
 	},
+	{
+		name: 'green-ring',
+		path: 'src/assets/sprites/green-ring.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 0, y: 0 },
+	},
 ]

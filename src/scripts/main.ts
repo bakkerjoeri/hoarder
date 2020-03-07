@@ -1,5 +1,5 @@
 import { GameState, Position } from './types.js';
-import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevelWithoutEntities, createGraphFromLevel, findTileInLevelWithEntity, findNearestEmptyTile } from './levels.js';
+import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, createGraphFromLevel, findTileInLevelWithEntity, findNearestEmptyTile } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
 import { Entity, moveEntityToPosition, addEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity, getEntities } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
@@ -14,11 +14,11 @@ import { spritesheet } from '../assets/spritesheet.js';
 import { floodFill } from './graph/floodFill.js';
 import { breadthFirstSearch } from './graph/search/breadthFirstSearch.js';
 import { createPileOfCoinsEntity, getSpriteNameForCoinAmount } from './entities/PileOfCoins.js';
-import { createHornetEntity } from './entities/actors/Hornet.js';
-import { createFrogEntity } from './entities/actors/Frog.js';
-import { createPlayerEntity } from './entities/actors/Player.js';
+import { createPlayerEntity, PlayerEntity } from './entities/actors/Player.js';
 import { createGochaponEggEntity } from './entities/GochaponEgg.js';
-import { pullRandomItem } from './itemPool.js';
+import { pullRandomItem, useItem } from './items.js';
+import { ItemEntity } from './entities/ItemEntity.js';
+import { ActorEntity } from './entities/ActorEntity.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -97,7 +97,7 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 	const playerEntityThatCanAct = findEntity(getEntitiesInLevel(state, getLevel(state, state.currentLevel)), {
 		isPlayer: true,
 		actionTicks: 0,
-	});
+	}) as PlayerEntity;
 
 	if (!playerEntityThatCanAct) {
 		return;
@@ -128,7 +128,7 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 	}
 
 	if (event.key === 'g') {
-		dropCoins(state, playerEntityThatCanAct, playerEntityThatCanAct.position, 3);
+		dropCoins(state, playerEntityThatCanAct, playerEntityThatCanAct.position!, 3);
 	}
 
 	if (event.key === '1') {
@@ -513,42 +513,20 @@ function exitLevel(state: GameState, entity: Entity): void {
 	}
 }
 
-function useItemInSlot(state: GameState, entity: Entity, slotIndex: number): void {
+function useItemInSlot(state: GameState, entity: ActorEntity, slotIndex: number): void {
 	if (!entity.inventory.hasOwnProperty(slotIndex)) {
 		return;
 	}
 
-	const itemEntity = getEntity(state, entity.inventory[slotIndex]);
+	const itemEntity = getEntity(state, entity.inventory[slotIndex]) as ItemEntity;
 
 	if (entity.coins < itemEntity.cost) {
 		return;
 	}
 
-	if (itemEntity.effect === 'summonFrog') {
-		const levelOfEntity = getLevel(state, entity.currentLevel);
-		const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, entity.currentLevel));
+	const hasUsedItemWithSuccess = useItem(state, itemEntity.name, entity);
 
-		if (!freeTiles.length) {
-			return;
-		}
-
-		const tileForFrog = choose(freeTiles);
-		addEntityToLevel(state, addEntity(state, createFrogEntity(false)), levelOfEntity, tileForFrog.position);
-
-		entity.coins = entity.coins - itemEntity.cost;
-	}
-
-	if (itemEntity.effect === 'summonHornet') {
-		const levelOfEntity = getLevel(state, entity.currentLevel);
-		const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, entity.currentLevel));
-
-		if (!freeTiles.length) {
-			return;
-		}
-
-		const tileForHornet = choose(freeTiles);
-		addEntityToLevel(state, addEntity(state, createHornetEntity(false)), levelOfEntity, tileForHornet.position);
-
+	if (hasUsedItemWithSuccess) {
 		entity.coins = entity.coins - itemEntity.cost;
 	}
 }

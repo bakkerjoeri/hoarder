@@ -4,7 +4,7 @@ import { GameState, Size, Position } from './types.js';
 import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
 import { PlayerEntity } from './entities/actors/Player.js';
 import { repeat } from './utilities/repeat.js';
-import { color0, color1, color2, color4, color8 } from './../assets/colors.js';
+import { color0, color1, color2, color8 } from './../assets/colors.js';
 
 const imageCache: {
 	[path: string]: HTMLImageElement;
