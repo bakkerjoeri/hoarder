@@ -2,10 +2,10 @@ import { Tile } from './tiles.js';
 import { Entity, findEntities, findEntity, getEntity } from './entities.js';
 import { GameState, Size, Position } from './types.js';
 import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
-import { PlayerEntity } from './entities/PlayerEntity.js';
-import { NonPlayerEntity } from './entities/NonPlayerEntity.js';
+import { PlayerEntity } from './entities/actors/Player.js';
 import { repeat } from './utilities/repeat.js';
-import { color0, color1, color2, color4, color8, color15 } from './../assets/colors.js';
+import { color0, color1, color2, color4, color8 } from './../assets/colors.js';
+import { ActorEntity } from './entities/ActorEntity.js';
 
 const imageCache: {
 	[path: string]: HTMLImageElement;
@@ -63,7 +63,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 		const entitiesWithHealth = findEntities(entitiesInLevel, {
 			health: true,
 			position: true,
-		}) as NonPlayerEntity[];
+		}) as ActorEntity[];
 
 		entitiesWithHealth.forEach((entityWithHealth) => {
 			const maxHealth = entityWithHealth.health.max;

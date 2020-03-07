@@ -1,4 +1,4 @@
-import { Entity } from '../entities';
+import { Entity } from '../entities.js';
 
 export interface ItemEntity extends Entity {
 	isItem: true;

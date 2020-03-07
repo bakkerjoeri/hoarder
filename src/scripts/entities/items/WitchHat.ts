@@ -12,5 +12,3 @@ export function createWitchHatEntity(): ItemEntity {
 		effect: 'summonFrog',
 	};
 }
-
-

@@ -1,6 +1,6 @@
-import { Entity } from '../entities';
-import { PositionComponent } from '../components/PositionComponent';
-import { HealthComponnent } from '../components/HealthComponent';
+import { Entity } from '../entities.js';
+import { PositionComponent } from '../components/PositionComponent.js';
+import { HealthComponnent } from '../components/HealthComponent.js';
 
 export interface ActorEntity extends Entity {
 	isActor: true;

@@ -1,7 +1,7 @@
 import { GameState, Position } from './types.js';
 import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, getTilesInLevelWithoutEntities, createGraphFromLevel, findTileInLevelWithEntity } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
-import { Entity, moveEntityToPosition, addEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity } from './entities.js';
+import { Entity, moveEntityToPosition, addEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity, getEntities } from './entities.js';
 import { eventBus } from './utilities/EventBus.js';
 import { setupGame } from './utilities/setupGame.js';
 import { start } from './utilities/tick.js';
@@ -16,6 +16,11 @@ import { floodFill } from './graph/floodFill.js';
 import { breadthFirstSearch } from './graph/search/breadthFirstSearch.js';
 import { createWitchHatEntity } from './entities/items/WitchHat.js';
 import { createHornetBoxEntity } from './entities/items/HornetBox.js';
+import { createPileOfCoinsEntity, getSpriteNameForCoinAmount } from './entities/PileOfCoins.js';
+import { repeat } from './utilities/repeat.js';
+import { createHornetEntity } from './entities/actors/Hornet.js';
+import { createFrogEntity } from './entities/actors/Frog.js';
+import { createPlayerEntity } from './entities/actors/Player.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -23,6 +28,7 @@ eventBus.on('update', update);
 eventBus.on('update', updateActionTicks);
 eventBus.on('update', decideActions);
 eventBus.on('concludeTurn', spendEnergy);
+eventBus.on('beforeDraw', updateCoinSprite);
 eventBus.on('draw', draw);
 
 const state: GameState = {
@@ -74,17 +80,16 @@ const entranceEntity = getEntitiesInLevel(state, levelOne).find((entity) => enti
 if (entranceEntity) {
 	const entranceTile = findTileInLevel(state, levelOne, entranceEntity.position);
 
-	addEntityToLevel(state, addEntity(state, {
-		sprite: 'hoarder',
-		isActor: true,
-		isPlayer: true,
-		isFriendly: true,
-		isSolid: true,
-		actionCost: 100,
-		health: createHealthComponent(5),
-		inventory: [],
-		coins: 99,
-	}), levelOne, entranceTile.position);
+	addEntityToLevel(state, addEntity(state, createPlayerEntity()), levelOne, entranceTile.position);
+
+	repeat(5, (amount) => {
+		addEntityToLevel(
+			state,
+			addEntity(state, createPileOfCoinsEntity(amount)),
+			levelOne,
+			choose(getTilesInLevelWithoutEntities(state, levelOne)).position
+		);
+	})
 
 	addEntityToLevel(
 		state,
@@ -93,13 +98,19 @@ if (entranceEntity) {
 		choose(getTilesInLevelWithoutEntities(state, levelOne)).position
 	);
 
-	addEntityToLevel(state, addEntity(state, createHornetBoxEntity()), levelOne, choose(getTilesInLevelWithoutEntities(state, levelOne)).position);
+	addEntityToLevel(
+		state,
+		addEntity(state, createHornetBoxEntity()),
+		levelOne,
+		choose(getTilesInLevelWithoutEntities(state, levelOne)).position
+	);
 }
 
 console.log(state);
 
 start((time: number) => {
-    eventBus.emit('update', time, state);
+	eventBus.emit('update', time, state);
+    eventBus.emit('beforeDraw', time, state, context);
     eventBus.emit('draw', time, state, context);
 });
 
@@ -141,6 +152,10 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 		eventBus.emit('concludeTurn', playerEntityThatCanAct, playerEntityThatCanAct.actionCost);
 	}
 
+	if (event.key === 'g') {
+		dropCoins(state, playerEntityThatCanAct, playerEntityThatCanAct.position, 3);
+	}
+
 	if (event.key === '1') {
 		useItemInSlot(state, playerEntityThatCanAct, 0);
 	}
@@ -155,14 +170,6 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 
 	if (event.key === '4') {
 		useItemInSlot(state, playerEntityThatCanAct, 3);
-	}
-
-	if (state.debugging && event.key.toLowerCase() === '[') {
-		showPreviousLevel();
-	}
-
-	if (state.debugging && event.key.toLowerCase() === ']') {
-		showNextLevel();
 	}
 });
 
@@ -186,6 +193,38 @@ function update(time: number, state: GameState): void {
 				entity.drawOffset.y = Math.min(entity.drawOffset.y + 16, 0);
 			}
 		});
+	}
+}
+
+function updateCoinSprite(time: number, state: GameState): void {
+	const pileOfCoinsEntities = findEntities(getEntities(state), {
+		isPileOfCoins: true,
+	});
+
+	pileOfCoinsEntities.forEach(pileOfCoinsEntity => {
+		pileOfCoinsEntity.sprite = getSpriteNameForCoinAmount(pileOfCoinsEntity.amount);
+	})
+}
+
+function dropCoins(state: GameState, entity: Entity, position: Position, amount: number): void {
+	const currentLevel = getLevel(state, entity.currentLevel);
+	const droppedAmount = Math.min(amount, entity.coins);
+
+	entity.coins = entity.coins - droppedAmount;
+
+	putCoinsOnPositionInLevel(state, position, currentLevel, droppedAmount);
+}
+
+function putCoinsOnPositionInLevel(state: GameState, position: Position, level: Level, amount: number): void {
+	const tileToPutCoinsOn = findTileInLevel(state, level, position)
+	const coinPileOnTile = findEntity(getEntitiesOnTile(state, tileToPutCoinsOn), {
+		isPileOfCoins: true,
+	});
+
+	if (coinPileOnTile) {
+		coinPileOnTile.amount = coinPileOnTile.amount + amount;
+	} else {
+		addEntityToLevel(state, addEntity(state, createPileOfCoinsEntity(amount)), level, position);
 	}
 }
 
@@ -227,8 +266,7 @@ function decideActions(time: number, state: GameState): void {
 		// find entities within those tiles that are of the opposite alliance
 		const possibleTargets = reachableTiles.reduce((targets: Entity[], tile): Entity[] => {
 			const targetsOnTile = findEntities(getEntitiesOnTile(state, tile, [currentActingEntity]), {
-				isFriendly: !!currentActingEntity.isEnemy,
-				isEnemy: !!currentActingEntity.isFriendly,
+				isEnemy: (isEnemy: boolean) => isEnemy === !currentActingEntity.isEnemy,
 			});
 			return [
 				...targets,
@@ -346,7 +384,13 @@ function actInDirection(state: GameState, entity: Entity, dx: number, dy: number
 
 function attackEntity(target: Entity, source: Entity): void {
 	target.health.current -= 1;
+
+	if (target.isEnemy === source.isEnemy) {
+		target.isEnemy = !target.isEnemy;
+	}
+
 	if (target.health.current === 0) {
+		dropCoins(state, target, target.position, target.coins);
 		removeEntityFromLevel(state, target);
 	}
 
@@ -420,6 +464,13 @@ function performContextSensitiveAction(state: GameState, entity: Entity): void {
 		removeEntityFromLevel(state, itemEntity);
 		return;
 	}
+
+	const pileOfCoinsEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isPileOfCoins);
+	if (pileOfCoinsEntity) {
+		entity.coins = entity.coins + pileOfCoinsEntity.amount;
+		removeEntityFromLevel(state, pileOfCoinsEntity);
+		return;
+	}
 }
 
 function exitLevel(state: GameState, entity: Entity): void {
@@ -463,15 +514,7 @@ function useItemInSlot(state: GameState, entity: Entity, slotIndex: number): voi
 		}
 
 		const tileForFrog = choose(freeTiles);
-		addEntityToLevel(state, addEntity(state, {
-			sprite: 'frog',
-			isActor: true,
-			isNonPlayer: true,
-			isFriendly: true,
-			isSolid: true,
-			health: createHealthComponent(3),
-			actionCost: 100,
-		}), levelOfEntity, tileForFrog.position);
+		addEntityToLevel(state, addEntity(state, createFrogEntity(false)), levelOfEntity, tileForFrog.position);
 
 		entity.coins = entity.coins - itemEntity.cost;
 	}
@@ -485,36 +528,8 @@ function useItemInSlot(state: GameState, entity: Entity, slotIndex: number): voi
 		}
 
 		const tileForHornet = choose(freeTiles);
-		addEntityToLevel(state, addEntity(state, {
-			sprite: 'hornet',
-			isActor: true,
-			isNonPlayer: true,
-			isFriendly: true,
-			isSolid: true,
-			health: createHealthComponent(1),
-			actionCost: 100,
-		}), levelOfEntity, tileForHornet.position);
+		addEntityToLevel(state, addEntity(state, createHornetEntity(false)), levelOfEntity, tileForHornet.position);
 
 		entity.coins = entity.coins - itemEntity.cost;
-	}
-}
-
-function showNextLevel(): void {
-	const currentLevelIndex = run.levels.indexOf(state.currentLevel as string);
-
-	if (currentLevelIndex === run.levels.length - 1) {
-		state.currentLevel = run.levels[0];
-	} else {
-		state.currentLevel = run.levels[currentLevelIndex + 1];
-	}
-}
-
-function showPreviousLevel(): void {
-	const currentLevelIndex = run.levels.indexOf(state.currentLevel as string);
-
-	if (currentLevelIndex === 0) {
-		state.currentLevel = run.levels[run.levels.length - 1];
-	} else {
-		state.currentLevel = run.levels[currentLevelIndex - 1];
 	}
 }

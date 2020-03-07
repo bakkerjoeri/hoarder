@@ -97,4 +97,28 @@ export const spritesheet: Sprite[] = [
 		size: { width: 4, height: 3 },
 		origin: { x: 6, y: 0 },
 	},
+	{
+		name: 'single-coin',
+		path: 'src/assets/sprites/coins.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 0, y: 0 },
+	},
+	{
+		name: 'two-coins',
+		path: 'src/assets/sprites/coins.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 16, y: 0 },
+	},
+	{
+		name: 'three-coins',
+		path: 'src/assets/sprites/coins.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 32, y: 0 },
+	},
+	{
+		name: 'four-coins',
+		path: 'src/assets/sprites/coins.png',
+		size: { width: 16, height: 16 },
+		origin: { x: 48, y: 0 },
+	},
 ]

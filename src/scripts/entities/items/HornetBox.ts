@@ -1,5 +1,5 @@
 import { ItemEntity } from '../ItemEntity.js';
-import { createUuid } from '../../utilities/createUuid.js';
+import { createUuid } from './../../utilities/createUuid.js';
 
 export function createHornetBoxEntity(): ItemEntity {
 	return {
@@ -12,5 +12,3 @@ export function createHornetBoxEntity(): ItemEntity {
 		effect: 'summonHornet',
 	};
 }
-
-

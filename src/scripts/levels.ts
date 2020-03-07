@@ -184,6 +184,7 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 			isSolid: true,
 			actionCost: 100,
 			health: createHealthComponent(2),
+			coins: 2,
 		}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
 	});
 
@@ -196,6 +197,7 @@ export function generateLevel(state: GameState, size: Size, entrancePosition?: P
 			isSolid: true,
 			actionCost: 200,
 			health: createHealthComponent(4),
+			coins: 4,
 		}), level, choose(getTilesInLevelWithoutEntities(state, level)).position);
 	});
 
