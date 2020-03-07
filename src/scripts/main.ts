@@ -19,6 +19,7 @@ import { createGochaponEggEntity } from './entities/GochaponEgg.js';
 import { pullRandomItem, useItem } from './items.js';
 import { ItemEntity } from './entities/ItemEntity.js';
 import { ActorEntity } from './entities/ActorEntity.js';
+import { arrayWithout } from './utilities/arrayWithout.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -104,47 +105,73 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 	}
 
 	if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
+		event.preventDefault();
 		actInDirection(state, playerEntityThatCanAct, 0, -1);
 	}
 
 	if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
+		event.preventDefault();
 		actInDirection(state, playerEntityThatCanAct, 1, 0);
 	}
 
 	if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
+		event.preventDefault();
 		actInDirection(state, playerEntityThatCanAct, 0, 1);
 	}
 
 	if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
+		event.preventDefault();
 		actInDirection(state, playerEntityThatCanAct, -1, 0);
 	}
 
 	if (event.key === ' ' || event.key.toLowerCase() === 'e') {
+		event.preventDefault();
 		performContextSensitiveAction(state, playerEntityThatCanAct);
 	}
 
 	if (event.key === 'q') {
+		event.preventDefault();
 		eventBus.emit('concludeTurn', playerEntityThatCanAct, playerEntityThatCanAct.actionCost);
 	}
 
-	if (event.key === 'g') {
-		dropCoins(state, playerEntityThatCanAct, playerEntityThatCanAct.position!, 3);
-	}
-
-	if (event.key === '1') {
+	if (event.keyCode === 49 && !event.shiftKey) { // 1
+		event.preventDefault();
 		useItemInSlot(state, playerEntityThatCanAct, 0);
 	}
 
-	if (event.key === '2') {
+	if (event.keyCode === 50 && !event.shiftKey) { // 2
+		event.preventDefault();
 		useItemInSlot(state, playerEntityThatCanAct, 1);
 	}
 
-	if (event.key === '3') {
+	if (event.keyCode === 51 && !event.shiftKey) { // 3
+		event.preventDefault();
 		useItemInSlot(state, playerEntityThatCanAct, 2);
 	}
 
-	if (event.key === '4') {
+	if (event.keyCode === 52 && !event.shiftKey) { // 4
+		event.preventDefault();
 		useItemInSlot(state, playerEntityThatCanAct, 3);
+	}
+
+	if (event.keyCode === 49 && event.shiftKey) { // shift + 1
+		event.preventDefault();
+		sellItemInSlot(playerEntityThatCanAct, 0);
+	}
+
+	if (event.keyCode === 50 && event.shiftKey) { // shift + 2
+		event.preventDefault();
+		sellItemInSlot(playerEntityThatCanAct, 1);
+	}
+
+	if (event.keyCode === 51 && event.shiftKey) { // shift + 3
+		event.preventDefault();
+		sellItemInSlot(playerEntityThatCanAct, 2);
+	}
+
+	if (event.keyCode === 52 && event.shiftKey) { // shift + 4
+		event.preventDefault();
+		sellItemInSlot(playerEntityThatCanAct, 3);
 	}
 });
 
@@ -514,7 +541,7 @@ function exitLevel(state: GameState, entity: Entity): void {
 }
 
 function useItemInSlot(state: GameState, entity: ActorEntity, slotIndex: number): void {
-	if (!entity.inventory.hasOwnProperty(slotIndex)) {
+	if (!entity.inventory[slotIndex]) {
 		return;
 	}
 
@@ -529,4 +556,13 @@ function useItemInSlot(state: GameState, entity: ActorEntity, slotIndex: number)
 	if (hasUsedItemWithSuccess) {
 		entity.coins = entity.coins - itemEntity.cost;
 	}
+}
+
+function sellItemInSlot(entity: ActorEntity, slotIndex: number): void {
+	if (!entity.inventory[slotIndex]) {
+		return;
+	}
+
+	entity.inventory.splice(slotIndex, 1);
+	entity.coins = entity.coins + 1;
 }
