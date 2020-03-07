@@ -132,7 +132,7 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 
 					drawText(
 						context,
-						`${itemInSlot.name}`,
+						`${itemInSlot.title}`,
 						16,
 						8 * TILE_SIZE,
 						(3 + slotIndex) * TILE_SIZE + 22,

@@ -9,7 +9,7 @@ export function createHealingRingEntity(): ItemEntity {
 		isItem: true,
 		sprite: 'green-ring',
 		name: 'healingRing',
-		title: 'healing ring',
+		title: 'emerald ring',
 		effectDescription: '+1 health',
 		cost: 1,
 	};
