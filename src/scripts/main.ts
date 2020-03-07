@@ -215,7 +215,6 @@ function decideActions(time: number, state: GameState): void {
 	while (nextActingEntity) {
 		const currentActingEntity = nextActingEntity;
 
-		console.log(`${currentActingEntity.sprite} is gonna act.`);
 		// Find current closest target
 		// create a level graph
 		const levelGraph = createGraphFromLevel(state, currentLevel);
@@ -236,8 +235,6 @@ function decideActions(time: number, state: GameState): void {
 				...targetsOnTile,
 			];
 		}, []);
-
-		console.log('Possible targets:', possibleTargets);
 
 		// find the closest of those targets
 		let pathLength = Infinity;
