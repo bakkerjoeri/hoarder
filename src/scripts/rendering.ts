@@ -1,8 +1,7 @@
 import { Tile } from './tiles.js';
-import { Entity, findEntities, findEntity, getEntity } from './entities.js';
+import { Entity, findEntities, getEntity } from './entities.js';
 import { GameState, Size, Position } from './types.js';
 import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
-import { PlayerEntity } from './entities/actors/Player.js';
 import { repeat } from './utilities/repeat.js';
 import { color0, color1, color2, color8 } from './../assets/colors.js';
 
@@ -92,79 +91,75 @@ export function draw(time: number, state: GameState, context: CanvasRenderingCon
 		});
 
 		// Draw player UI
-		const playerEntity = findEntity(entitiesInLevel, { isPlayer: true }) as PlayerEntity;
-		if (playerEntity && playerEntity.inventory) {
+		// Draw inventory
+		drawText(
+			context,
+			'inventory:',
+			16,
+			7 * TILE_SIZE,
+			2 * TILE_SIZE + 44,
+			color1,
+		);
 
-			// Draw player inventory
+		const inventoryEntities = state.inventory.map((entityId) => getEntity(state, entityId));
+		repeat(4, (slotIndex) => {
+			const itemInSlot = inventoryEntities[slotIndex];
+
 			drawText(
 				context,
-				'inventory:',
+				`slot ${slotIndex + 1}`,
 				16,
-				7 * TILE_SIZE,
-				2 * TILE_SIZE + 44,
-				color1,
+				8 * TILE_SIZE,
+				(3 + slotIndex) * TILE_SIZE + 4,
+				itemInSlot ? color2 : color1,
 			);
 
-			const inventoryEntities = playerEntity.inventory.map((entityId) => getEntity(state, entityId));
-			repeat(4, (slotIndex) => {
-				const itemInSlot = inventoryEntities[slotIndex];
+			if (itemInSlot) {
+				drawSprite(
+					getSprite(state, inventoryEntities[slotIndex].sprite),
+					context,
+					7,
+					3 + slotIndex,
+				);
 
 				drawText(
 					context,
-					`slot ${slotIndex + 1}`,
+					`${itemInSlot.title}`,
 					16,
 					8 * TILE_SIZE,
-					(3 + slotIndex) * TILE_SIZE + 4,
-					itemInSlot ? color2 : color1,
+					(3 + slotIndex) * TILE_SIZE + 22,
+					color2,
 				);
 
-				if (itemInSlot) {
-					drawSprite(
-						getSprite(state, inventoryEntities[slotIndex].sprite),
-						context,
-						7,
-						3 + slotIndex,
-					);
+				drawText(
+					context,
+					`${itemInSlot.cost}¢`,
+					16,
+					8 * TILE_SIZE,
+					(3 + slotIndex) * TILE_SIZE + 40,
+					color8,
+				);
 
-					drawText(
-						context,
-						`${itemInSlot.title}`,
-						16,
-						8 * TILE_SIZE,
-						(3 + slotIndex) * TILE_SIZE + 22,
-						color2,
-					);
+				drawText(
+					context,
+					`${itemInSlot.effectDescription}`,
+					16,
+					8 * TILE_SIZE + 28,
+					(3 + slotIndex) * TILE_SIZE + 40,
+					color2,
+				);
+			}
+		});
 
-					drawText(
-						context,
-						`${itemInSlot.cost}¢`,
-						16,
-						8 * TILE_SIZE,
-						(3 + slotIndex) * TILE_SIZE + 40,
-						color8,
-					);
-
-					drawText(
-						context,
-						`${itemInSlot.effectDescription}`,
-						16,
-						8 * TILE_SIZE + 28,
-						(3 + slotIndex) * TILE_SIZE + 40,
-						color2,
-					);
-				}
-			});
-
-			// Draw coins
-			drawText(
-				context,
-				`coins: ${playerEntity.coins}¢`,
-				16,
-				7 * TILE_SIZE,
-				0,
-				color8,
-			);
-		}
+		// Draw coins
+		drawText(
+			context,
+			`coins: ${state.coins}¢`,
+			16,
+			7 * TILE_SIZE,
+			0,
+			color8,
+		);
 	}
 }
 

@@ -15,7 +15,6 @@ export type ItemName = 'witchHat'
 	| 'healingRing'
 	| 'blackOpalPendant'
 	| 'fourSidedDie'
-	| 'scrollOfFire';
 
 interface CreateItem { (): ItemEntity }
 type ItemPool = { [item in ItemName]: CreateItem };
@@ -23,13 +22,12 @@ type ItemPool = { [item in ItemName]: CreateItem };
 interface UseItem { (state: GameState, user: ActorEntity): boolean }
 type ItemEffects = { [item in ItemName]: UseItem };
 
-const itemPool: Partial<ItemPool> = {
+const itemPool: ItemPool = {
 	witchHat: createWitchHatEntity,
 	hornetBox: createHornetBoxEntity,
 	healingRing: createHealingRingEntity,
 	blackOpalPendant: createBlackOpalPendant,
 	fourSidedDie: createFourSidedDie,
-	scrollOfFire: createScrollOfFire,
 }
 
 const itemEffects: ItemEffects = {
@@ -38,7 +36,6 @@ const itemEffects: ItemEffects = {
 	healingRing: useHealingRing,
 	blackOpalPendant: useBlackOpalPendant,
 	fourSidedDie: useFourSidedDie,
-	scrollOfFire: useScrollOfFire,
 }
 
 let availableItems: ItemName[] = [];

@@ -5,7 +5,6 @@ import { createHealthComponent } from './../../components/HealthComponent.js';
 export interface PlayerEntity extends ActorEntity {
 	isPlayer: true;
 	isEnemy: false;
-	inventory: string[];
 }
 
 export function createPlayerEntity(): PlayerEntity {
@@ -18,7 +17,5 @@ export function createPlayerEntity(): PlayerEntity {
 		isSolid: true,
 		actionCost: 100,
 		health: createHealthComponent(5),
-		inventory: [],
-		coins: 0,
 	}
 }

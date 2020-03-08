@@ -35,5 +35,7 @@ export interface GameState {
 	sprites: {
 		[spriteName: string]: Sprite;
 	};
+	inventory: string[];
+	coins: number;
 	debugging: boolean;
 }

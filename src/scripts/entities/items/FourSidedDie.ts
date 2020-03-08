@@ -4,7 +4,6 @@ import { GameState } from '../../types.js';
 import { repeat } from '../../utilities/repeat.js';
 import { addEntity } from '../../entities.js';
 import { pullRandomItem } from '../../items.js';
-import { ActorEntity } from '../ActorEntity.js';
 
 export function createFourSidedDie(): ItemEntity {
 	return {
@@ -18,16 +17,12 @@ export function createFourSidedDie(): ItemEntity {
 	}
 }
 
-export function useFourSidedDie(state: GameState, user: ActorEntity): boolean {
-	if (!user.inventory) {
-		return false;
-	}
-
-	const amountOfItemsToReroll = user.inventory.length;
+export function useFourSidedDie(state: GameState): boolean {
+	const amountOfItemsToReroll = state.inventory.length;
 
 	repeat(amountOfItemsToReroll, (slotIndex) => {
 		const newItem = addEntity(state, pullRandomItem());
-		user.inventory[slotIndex] = newItem.id;
+		state.inventory[slotIndex] = newItem.id;
 	});
 
 	return true;

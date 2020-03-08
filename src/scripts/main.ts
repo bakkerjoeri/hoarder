@@ -39,6 +39,8 @@ const state: GameState = {
 	tiles: {},
 	levels: {},
 	sprites: {},
+	inventory: [],
+	coins: 0,
 	debugging: false,
 }
 
@@ -206,22 +208,22 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 
 	if (event.keyCode === 49 && event.shiftKey) { // shift + 1
 		event.preventDefault();
-		sellItemInSlot(playerEntityThatCanAct, 0);
+		sellItemInSlot(state, 0);
 	}
 
 	if (event.keyCode === 50 && event.shiftKey) { // shift + 2
 		event.preventDefault();
-		sellItemInSlot(playerEntityThatCanAct, 1);
+		sellItemInSlot(state, 1);
 	}
 
 	if (event.keyCode === 51 && event.shiftKey) { // shift + 3
 		event.preventDefault();
-		sellItemInSlot(playerEntityThatCanAct, 2);
+		sellItemInSlot(state, 2);
 	}
 
 	if (event.keyCode === 52 && event.shiftKey) { // shift + 4
 		event.preventDefault();
-		sellItemInSlot(playerEntityThatCanAct, 3);
+		sellItemInSlot(state, 3);
 	}
 });
 
@@ -562,8 +564,8 @@ function performContextSensitiveAction(state: GameState, entity: Entity): void {
 	}
 
 	const itemEntity = entitiesOnTile.find(entityOnTile => entityOnTile.isItem);
-	if (itemEntity && entity.inventory.length < 4) {
-		entity.inventory.push(itemEntity.id);
+	if (itemEntity && state.inventory.length < 4) {
+		state.inventory.push(itemEntity.id);
 		removeEntityFromLevel(state, itemEntity);
 		return;
 	}
@@ -601,11 +603,11 @@ function exitLevel(state: GameState, entity: Entity): void {
 }
 
 function useItemInSlot(state: GameState, entity: ActorEntity, slotIndex: number): void {
-	if (!entity.inventory[slotIndex]) {
+	if (!state.inventory[slotIndex]) {
 		return;
 	}
 
-	const itemEntity = getEntity(state, entity.inventory[slotIndex]) as ItemEntity;
+	const itemEntity = getEntity(state, state.inventory[slotIndex]) as ItemEntity;
 
 	if (entity.coins < itemEntity.cost) {
 		return;
@@ -618,11 +620,11 @@ function useItemInSlot(state: GameState, entity: ActorEntity, slotIndex: number)
 	}
 }
 
-function sellItemInSlot(entity: ActorEntity, slotIndex: number): void {
-	if (!entity.inventory[slotIndex]) {
+function sellItemInSlot(state: GameState, slotIndex: number): void {
+	if (!state.inventory[slotIndex]) {
 		return;
 	}
 
-	entity.inventory.splice(slotIndex, 1);
-	entity.coins = entity.coins + 1;
+	state.inventory.splice(slotIndex, 1);
+	state.coins = state.coins + 1;
 }
