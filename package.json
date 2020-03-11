@@ -1,6 +1,6 @@
 {
-  "name": "tinker",
-  "version": "0.0.1",
+  "name": "hoarder",
+  "version": "0.2.1",
   "description": "A game developed for 7DRL 2020",
   "license": "MIT",
   "main": "dist/index.js",
