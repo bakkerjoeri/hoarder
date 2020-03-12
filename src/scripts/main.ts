@@ -19,21 +19,11 @@ import { createGochaponEggEntity } from './entities/GochaponEgg.js';
 import { pullRandomItem, useItem } from './items.js';
 import { ItemEntity } from './entities/ItemEntity.js';
 import { ActorEntity } from './entities/ActorEntity.js';
+import { EventHandlerTypes, StartSceneEvent, EndSceneEvent, ConcludeTurnEvent } from './events/types.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
-const eventEmitter = new EventEmitter<{
-	start: (state: GameState) => void;
-	beforeUpdate: (time: number, state: GameState) => void;
-	update: (time: number, state: GameState) => void;
-	afterUpdate: (time: number, state: GameState) => void;
-	beforeDraw: (time: number, state: GameState) => void;
-	draw: (time: number, state: GameState, context: CanvasRenderingContext2D) => void;
-	afterDraw: (time: number, state: GameState) => void;
-	startScene: (state: GameState, sceneName: string) => void;
-	endScene: (state: GameState, sceneName: string) => void;
-	concludeTurn: (entity: Entity, energy: number) => void;
-}>();
+const eventEmitter = new EventEmitter<EventHandlerTypes>();
 
 eventEmitter.on('start', startGame);
 eventEmitter.on('afterUpdate', updateScene);
@@ -59,22 +49,23 @@ spritesheet.forEach((sprite) => {
 	addSprite(state, sprite.name, sprite.path, sprite.size, sprite.origin);
 });
 
-
 function startGame(state: GameState): void {
-	eventEmitter.emit('startScene', state, state.scene.current);
+	eventEmitter.emit('startScene', state, { sceneName: state.scene.current });
 }
 
-function updateScene(time: number, state: GameState): void {
-	if (state.scene.next) {
-		const currentScene = state.scene.current;
-		const newScene = state.scene.next;
-
-		state.scene.current = newScene;
-		state.scene.next = null;
-		state.scene.history.push(currentScene);
-		eventEmitter.emit('endScene', state, currentScene);
-		eventEmitter.emit('startScene', state, newScene);
+function updateScene(state: GameState): void {
+	if (!state.scene.next) {
+		return;
 	}
+
+	const currentScene = state.scene.current;
+	const newScene = state.scene.next;
+
+	state.scene.current = newScene;
+	state.scene.next = null;
+	state.scene.history.push(currentScene);
+	eventEmitter.emit('endScene', state, { sceneName: currentScene });
+	eventEmitter.emit('startScene', state, { sceneName: newScene });
 }
 
 function switchScene(state: GameState, newSceneName: string): void {
@@ -85,7 +76,7 @@ function switchScene(state: GameState, newSceneName: string): void {
 	state.scene.next = newSceneName;
 }
 
-function handleStartScene(state: GameState, sceneName: string): void {
+function handleStartScene(state: GameState, { sceneName }: StartSceneEvent): void {
 	if (sceneName === 'run') {
 		createRunScene(state);
 		eventEmitter.on('update', updateActionTicks);
@@ -96,7 +87,7 @@ function handleStartScene(state: GameState, sceneName: string): void {
 	}
 }
 
-function handleEndScene(state: GameState, sceneName: string): void {
+function handleEndScene(state: GameState, { sceneName }: EndSceneEvent): void {
 	if (sceneName === 'run') {
 		eventEmitter.remove('update', updateActionTicks);
 		eventEmitter.remove('update', decideActions);
@@ -148,14 +139,14 @@ function findLevelExitPosition(state: GameState, level: Level): Position | undef
 	return exitObject.position;
 }
 
-eventEmitter.emit('start', state);
+eventEmitter.emit('start', state, {});
 start((time: number) => {
-	eventEmitter.emit('beforeUpdate', time, state);
-	eventEmitter.emit('update', time, state);
-	eventEmitter.emit('afterUpdate', time, state);
-    eventEmitter.emit('beforeDraw', time, state);
-	eventEmitter.emit('draw', time, state, context);
-    eventEmitter.emit('afterDraw', time, state);
+	eventEmitter.emit('beforeUpdate', state, { time });
+	eventEmitter.emit('update', state, { time });
+	eventEmitter.emit('afterUpdate', state, { time });
+    eventEmitter.emit('beforeDraw', state, { time });
+	eventEmitter.emit('draw', state, { time, context });
+    eventEmitter.emit('afterDraw', state, { time });
 });
 
 window.addEventListener('keyup', (event: KeyboardEvent) => {
@@ -238,7 +229,7 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 	}
 });
 
-function updateDrawOffset(time: number, state: GameState): void {
+function updateDrawOffset(state: GameState): void {
 	if (!state.currentLevel) {
 		return;
 	}
@@ -263,7 +254,7 @@ function updateDrawOffset(time: number, state: GameState): void {
 	});
 }
 
-function updateCoinSprite(time: number, state: GameState): void {
+function updateCoinSprite(state: GameState): void {
 	const pileOfCoinsEntities = findEntities(getEntities(state), {
 		isPileOfCoins: true,
 	});
@@ -310,7 +301,7 @@ function findNextActingEntity(state: GameState): Entity | undefined {
 	});
 }
 
-function decideActions(time: number, state: GameState): void {
+function decideActions(state: GameState): void {
 	if (!state.currentLevel) {
 		return;
 	}
@@ -384,7 +375,10 @@ function decideActions(time: number, state: GameState): void {
 					path[0].position.x - currentActingEntity.position.x,
 					path[0].position.y - currentActingEntity.position.y
 				);
-				eventEmitter.emit('concludeTurn', currentActingEntity, currentActingEntity.actionCost);
+				eventEmitter.emit('concludeTurn', state, {
+					entity: currentActingEntity,
+					energy: currentActingEntity.actionCost
+				});
 				nextActingEntity = findNextActingEntity(state);
 				continue;
 			}
@@ -399,7 +393,10 @@ function decideActions(time: number, state: GameState): void {
 		});
 
 		if (tilesWithoutObstacles.length === 0) {
-			eventEmitter.emit('concludeTurn', currentActingEntity, currentActingEntity.actionCost);
+			eventEmitter.emit('concludeTurn', state, {
+				entity: currentActingEntity,
+				energy: currentActingEntity.actionCost
+			});
 			nextActingEntity = findNextActingEntity(state);
 			continue;
 		}
@@ -412,7 +409,10 @@ function decideActions(time: number, state: GameState): void {
 			targetTile.position.x - currentActingEntity.position.x,
 			targetTile.position.y - currentActingEntity.position.y
 		);
-		eventEmitter.emit('concludeTurn', currentActingEntity, currentActingEntity.actionCost);
+		eventEmitter.emit('concludeTurn', state, {
+			entity: currentActingEntity,
+			energy: currentActingEntity.actionCost
+		});
 		nextActingEntity = findNextActingEntity(state);
 		continue;
 	}
@@ -465,7 +465,10 @@ function actInDirection(state: GameState, entity: Entity, dx: number, dy: number
 	}
 
 	moveEntityInDirection(state, entity, dx, dy);
-	eventEmitter.emit('concludeTurn', entity, entity.actionCost);
+	eventEmitter.emit('concludeTurn', state, {
+		entity: entity,
+		energy: entity.actionCost
+	});
 	return;
 }
 
@@ -510,10 +513,13 @@ function attackEntity(state: GameState, target: Entity, source: Entity): void {
 		}
 	}
 
-	eventEmitter.emit('concludeTurn', source, source.actionCost);
+	eventEmitter.emit('concludeTurn', state, {
+		entity: source,
+		energy: source.actionCost
+	});
 }
 
-function spendEnergy(entity: Entity, energy: number): void {
+function spendEnergy(state: GameState, { entity, energy }: ConcludeTurnEvent): void {
 	if (!entity.hasOwnProperty('actionTicks')) {
 		entity.actionTicks = energy;
 	} else {
@@ -521,7 +527,7 @@ function spendEnergy(entity: Entity, energy: number): void {
 	}
 }
 
-function updateActionTicks(time: number, state: GameState): void {
+function updateActionTicks(state: GameState): void {
 	if (state.currentLevel) {
 		const currentLevel = getLevel(state, state.currentLevel);
 		const entitiesInLevel = getEntitiesInLevel(state, currentLevel);
