@@ -2,7 +2,7 @@ import { GameState, Position } from './types.js';
 import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, createGraphFromLevel, findTileInLevelWithEntity, findNearestEmptyTile } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
 import { Entity, moveEntityToPosition, addEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity, getEntities } from './entities.js';
-import { EventEmitter } from './utilities/EventEmitter';
+import { EventEmitter } from './utilities/EventEmitter.js';
 import { setupGame } from './utilities/setupGame.js';
 import { start } from './utilities/tick.js';
 import { getEntitiesOnTile, Tile } from './tiles.js';

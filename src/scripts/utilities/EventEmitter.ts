@@ -1,5 +1,5 @@
-import { arrayWithout } from './arrayWithout';
-import { objectWithout } from './objectWithout';
+import { arrayWithout } from './arrayWithout.js';
+import { objectWithout } from './objectWithout.js';
 
 type EventHandlerArguments<Event> =
 	[Event] extends [(...args: infer U) => any] ? U :
@@ -15,7 +15,7 @@ interface EventHandler<Events, EventType extends keyof Events> {
 }
 
 export class EventEmitter<Events> {
-    private eventHandlers: any;
+	private eventHandlers: any = {};
 
     public on<EventType extends keyof Events>(
         eventType: EventType,
