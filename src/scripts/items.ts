@@ -23,7 +23,7 @@ type ItemPool = { [item in ItemName]: CreateItem };
 interface UseItem { (state: GameState, user: ActorEntity): boolean }
 type ItemEffects = { [item in ItemName]: UseItem };
 
-const itemPool: Partial<ItemPool> = {
+const itemPool: ItemPool = {
 	witchHat: createWitchHatEntity,
 	hornetBox: createHornetBoxEntity,
 	healingRing: createHealingRingEntity,
