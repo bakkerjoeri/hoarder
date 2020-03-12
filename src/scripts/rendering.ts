@@ -5,6 +5,7 @@ import { getTilesInLevel, getLevel, getEntitiesInLevel } from './levels.js';
 import { PlayerEntity } from './entities/actors/Player.js';
 import { repeat } from './utilities/repeat.js';
 import { color0, color1, color2, color8 } from './../assets/colors.js';
+import { DrawEvent } from './events/types.js';
 
 const imageCache: {
 	[path: string]: HTMLImageElement;
@@ -26,7 +27,7 @@ export const SCALE = 4;
 export const GAME_WIDTH = 12 * TILE_SIZE;
 export const GAME_HEIGHT = LEVEL_HEIGHT * TILE_SIZE;
 
-export function draw(time: number, state: GameState, context: CanvasRenderingContext2D): void {
+export function draw(state: GameState, { context }: DrawEvent): void {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
 	if (state.currentLevel) {
