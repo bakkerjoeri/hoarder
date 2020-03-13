@@ -27,7 +27,7 @@ export const SCALE = 4;
 export const GAME_WIDTH = 12 * TILE_SIZE;
 export const GAME_HEIGHT = LEVEL_HEIGHT * TILE_SIZE;
 
-export function draw(state: GameState, { context }: DrawEvent): void {
+export function draw(state: GameState, { context }: DrawEvent): GameState {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
 	if (state.currentLevel) {
@@ -167,6 +167,8 @@ export function draw(state: GameState, { context }: DrawEvent): void {
 			);
 		}
 	}
+
+	return state;
 }
 
 export function addSprite(state: GameState, name: string, path: string, size: Size, origin: Position = {x: 0, y: 0}): Sprite {

@@ -4,13 +4,13 @@ import { Tile } from './tiles.js';
 import { Sprite } from './rendering.js';
 
 export interface Size {
-    width: number;
-    height: number;
+	width: number;
+	height: number;
 }
 
 export interface Position {
-    x: number;
-    y: number;
+	x: number;
+	y: number;
 }
 
 export interface GameState {
@@ -19,9 +19,9 @@ export interface GameState {
 		next: null | string;
 		history: string[];
 	};
-    entities: {
+	entities: {
 		[entityId: string]: Entity;
-    };
+	};
 	tiles: {
 		[tileId: string]: Tile;
 	};
@@ -35,5 +35,4 @@ export interface GameState {
 	sprites: {
 		[spriteName: string]: Sprite;
 	};
-	debugging: boolean;
 }

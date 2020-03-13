@@ -2,20 +2,20 @@ import { GameState } from './../types.js';
 import { Entity } from './../entities.js';
 
 export interface EventHandlerTypes {
-	start: EventHandler<{}>;
-	beforeUpdate: EventHandler<BeforeUpdateEvent>;
-	update: EventHandler<UpdateEvent>;
-	afterUpdate: EventHandler<AfterUpdateEvent>;
-	beforeDraw: EventHandler<BeforeDrawEvent>;
-	draw: EventHandler<DrawEvent>;
-	afterDraw: EventHandler<AfterDrawEvent>;
-	startScene: EventHandler<StartSceneEvent>;
-	endScene: EventHandler<EndSceneEvent>;
-	concludeTurn: EventHandler<ConcludeTurnEvent>;
+	start: {};
+	beforeUpdate: BeforeUpdateEvent;
+	update: UpdateEvent;
+	afterUpdate: AfterUpdateEvent;
+	beforeDraw: BeforeDrawEvent;
+	draw: DrawEvent;
+	afterDraw: AfterDrawEvent;
+	startScene: StartSceneEvent;
+	endScene: EndSceneEvent;
+	concludeTurn: ConcludeTurnEvent;
 }
 
 export interface EventHandler<Event = {}> {
-	(state: GameState, event: Event): void;
+	(state: GameState, event: Event): GameState;
 }
 
 export interface BeforeUpdateEvent {
