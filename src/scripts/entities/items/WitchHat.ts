@@ -1,3 +1,4 @@
+import { ItemConfiguration } from './../../items.js';
 import { ItemEntity } from '../ItemEntity.js';
 import { createUuid } from '../../utilities/createUuid.js';
 import { GameState } from '../../types.js';
@@ -7,6 +8,52 @@ import { choose } from '../../random/choose.js';
 import { addEntity } from '../../entities.js';
 import { createFrogEntity } from '../actors/Frog.js';
 
+export const witchHatConfiguration: ItemConfiguration = {
+	create: (): ItemEntity => {
+		return {
+			id: createUuid(),
+			isItem: true,
+			sprite: 'witchhat',
+			name: 'witchHat',
+			title: 'witch\'s hat',
+			effectDescription: 'summon a frog buddy',
+			cost: 2,
+			effect: 'summonFrog',
+		};
+	},
+	canUse: (state: GameState, user: ActorEntity): boolean => {
+		const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, user.currentLevel));
+
+		if (!freeTiles.length) {
+			return false;
+		}
+
+		return true;
+	},
+	use: (state: GameState, user: ActorEntity): GameState => {
+		const levelOfEntity = getLevel(state, user.currentLevel);
+		const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, user.currentLevel));
+
+		if (!freeTiles.length) {
+			return state;
+		}
+
+		const tileForFrog = choose(freeTiles);
+		addEntityToLevel(state, addEntity(state, createFrogEntity(false)), levelOfEntity, tileForFrog.position);
+		state = {
+			...state,
+			entities: {
+				...state.entities,
+				[user.id]: {
+					...state.entities[user.id],
+					coins: state.entities[user.id].coins - 2,
+				},
+			},
+		};
+
+		return state;
+	}
+}
 export function createWitchHatEntity(): ItemEntity {
 	return {
 		id: createUuid(),
@@ -20,16 +67,26 @@ export function createWitchHatEntity(): ItemEntity {
 	};
 }
 
-export function useWitchHat(state: GameState, user: ActorEntity): boolean {
+export function useWitchHat(state: GameState, user: ActorEntity): GameState {
 	const levelOfEntity = getLevel(state, user.currentLevel);
 	const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, user.currentLevel));
 
 	if (!freeTiles.length) {
-		return false;
+		return state;
 	}
 
 	const tileForFrog = choose(freeTiles);
 	addEntityToLevel(state, addEntity(state, createFrogEntity(false)), levelOfEntity, tileForFrog.position);
+	state = {
+		...state,
+		entities: {
+			...state.entities,
+			[user.id]: {
+				...state.entities[user.id],
+				coins: state.entities[user.id].coins - 2,
+			},
+		},
+	};
 
-	return true;
+	return state;
 }

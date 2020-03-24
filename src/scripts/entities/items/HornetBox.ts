@@ -20,16 +20,27 @@ export function createHornetBoxEntity(): ItemEntity {
 	};
 }
 
-export function useHornetBox(state: GameState, user: ActorEntity): boolean {
+export function useHornetBox(state: GameState, user: ActorEntity): GameState {
 	const levelOfEntity = getLevel(state, user.currentLevel);
-		const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, user.currentLevel));
+	const freeTiles = getTilesInLevelWithoutEntities(state, getLevel(state, user.currentLevel));
 
-		if (!freeTiles.length) {
-			return false;
-		}
+	if (!freeTiles.length) {
+		return state;
+	}
 
-		const tileForHornet = choose(freeTiles);
-		addEntityToLevel(state, addEntity(state, createHornetEntity(false)), levelOfEntity, tileForHornet.position);
+	const tileForHornet = choose(freeTiles);
+	addEntityToLevel(state, addEntity(state, createHornetEntity(false)), levelOfEntity, tileForHornet.position);
 
-		return true;
+	state = {
+		...state,
+		entities: {
+			...state.entities,
+			[user.id]: {
+				...state.entities[user.id],
+				coins: state.entities[user.id].coins - 1,
+			},
+		},
+	};
+
+	return state;
 }

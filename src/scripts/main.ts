@@ -1,7 +1,7 @@
 import { GameState, Position } from './types.js';
 import { generateLevel, doesPositionExistInLevel, getLevel, findTileInLevel, getEntitiesInLevel, addEntityToLevel, Level, findSurroundingTiles, createGraphFromLevel, findTileInLevelWithEntity, findNearestEmptyTile } from './levels.js';
 import { draw, addSprite, GAME_WIDTH, GAME_HEIGHT, TILE_SIZE } from './rendering.js';
-import { Entity, moveEntityToPosition, addEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity, getEntities } from './entities.js';
+import { Entity, moveEntityToPosition, addEntity, removeEntityFromLevel, findEntities, findEntity, moveEntityToLevel, getEntity, getEntities, EntityWith } from './entities.js';
 import { setupGame } from './utilities/setupGame.js';
 import { start } from './utilities/tick.js';
 import { getEntitiesOnTile, Tile } from './tiles.js';
@@ -20,6 +20,7 @@ import { ItemEntity } from './entities/ItemEntity.js';
 import { ActorEntity } from './entities/ActorEntity.js';
 import { EventHandlerTypes, StartSceneEvent, EndSceneEvent, ConcludeTurnEvent } from './events/types.js';
 import { FunctionalEventEmitter } from './utilities/FunctionalEventEmitter.js';
+import { arrayWithout } from './utilities/arrayWithout.js';
 
 const { context } = setupGame('body', {width: GAME_WIDTH, height: GAME_HEIGHT}, 1);
 
@@ -31,7 +32,7 @@ eventEmitter.on('startScene', handleStartScene);
 eventEmitter.on('endScene', handleEndScene);
 eventEmitter.on('draw', draw);
 
-const state: GameState = {
+let state: GameState = {
 	scene: {
 		current: 'run',
 		next: null,
@@ -154,14 +155,16 @@ function findLevelExitPosition(state: GameState, level: Level): Position | undef
 	return exitObject.position;
 }
 
-eventEmitter.emit('start', state, {});
+state = eventEmitter.emit('start', state, {});
 start((time: number) => {
-	eventEmitter.emit('beforeUpdate', state, { time });
-	eventEmitter.emit('update', state, { time });
-	eventEmitter.emit('afterUpdate', state, { time });
-    eventEmitter.emit('beforeDraw', state, { time });
-	eventEmitter.emit('draw', state, { time, context });
-    eventEmitter.emit('afterDraw', state, { time });
+	state = eventEmitter.emit('beforeUpdate', state, { time });
+	state = eventEmitter.emit('update', state, { time });
+	state = eventEmitter.emit('afterUpdate', state, { time });
+	state = eventEmitter.emit('beforeDraw', state, { time });
+	state = eventEmitter.emit('draw', state, { time, context });
+	state = eventEmitter.emit('afterDraw', state, { time });
+
+	return state;
 });
 
 window.addEventListener('keyup', (event: KeyboardEvent) => {
@@ -646,15 +649,15 @@ function exitLevel(state: GameState, entity: Entity): void {
 	}
 }
 
-function useItemInSlot(state: GameState, entity: ActorEntity, slotIndex: number): void {
+function useItemInSlot(state: GameState, entity: ActorEntity, slotIndex: number): GameState {
 	if (!entity.inventory[slotIndex]) {
-		return;
+		return state;
 	}
 
 	const itemEntity = getEntity(state, entity.inventory[slotIndex]) as ItemEntity;
 
 	if (entity.coins < itemEntity.cost) {
-		return;
+		return state;
 	}
 
 	const hasUsedItemWithSuccess = useItem(state, itemEntity.name, entity);
@@ -664,11 +667,23 @@ function useItemInSlot(state: GameState, entity: ActorEntity, slotIndex: number)
 	}
 }
 
-function sellItemInSlot(entity: ActorEntity, slotIndex: number): void {
+function sellItemInSlot<EntityType extends EntityWith<{
+	inventory: string[];
+	coins: number;
+}>>(
+	entity: EntityType,
+	slotIndex: number
+): EntityType {
 	if (!entity.inventory[slotIndex]) {
-		return;
+		return entity;
 	}
 
 	entity.inventory.splice(slotIndex, 1);
 	entity.coins = entity.coins + 1;
+
+	return {
+		...entity,
+		inventory: arrayWithout(entity.inventory, entity.inventory[slotIndex]),
+		coins: entity.coins + 1,
+	};
 }

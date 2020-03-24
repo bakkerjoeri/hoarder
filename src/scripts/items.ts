@@ -20,8 +20,14 @@ export type ItemName = 'witchHat'
 interface CreateItem { (): ItemEntity }
 type ItemPool = { [item in ItemName]: CreateItem };
 
-interface UseItem { (state: GameState, user: ActorEntity): boolean }
+interface UseItem { (state: GameState, user: ActorEntity): GameState }
 type ItemEffects = { [item in ItemName]: UseItem };
+
+export interface ItemConfiguration {
+	create: () => ItemEntity;
+	canUse: (state: GameState, user: ActorEntity) => boolean;
+	use: (state: GameState, user: ActorEntity) => GameState;
+}
 
 const itemPool: ItemPool = {
 	witchHat: createWitchHatEntity,
@@ -56,7 +62,7 @@ export function pullRandomItem(): ItemEntity {
 	return itemCreateFunction();
 }
 
-export function useItem(state: GameState, item: ItemName, user: ActorEntity): boolean {
+export function useItem(state: GameState, item: ItemName, user: ActorEntity): GameState {
 	const useItemFunction = itemEffects[item];
 
 	return useItemFunction(state, user);

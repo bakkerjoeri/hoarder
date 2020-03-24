@@ -6,6 +6,8 @@ export interface ActorEntity extends Entity {
 	isActor: true;
 	isSolid: boolean;
 	health: HealthComponnent;
+	coins: number;
+	actionCost: number;
 	sprite?: string;
 	position?: PositionComponent;
 }

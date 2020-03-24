@@ -10,6 +10,8 @@ export interface Entity {
     [componentName: string]: Component;
 }
 
+export type EntityWith<Components> = Entity & Components;
+
 export interface ComponentFilterMap {
 	[componentName: string]: ComponentFilter;
 }
