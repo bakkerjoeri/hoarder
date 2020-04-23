@@ -147,23 +147,19 @@ export function createGraphFromLevel(state: GameState, level: Level, filter?: (e
 	const tilesInLevel = getTilesInLevel(state, level);
 
 	tilesInLevel.forEach(tile => {
-		levelGraph.addNode(tile);
-	});
-
-	levelGraph.nodes.forEach(node => {
-		const neighbours = findSurroundingTiles(state, level, node.position);
+		const neighbours = findSurroundingTiles(state, level, tile.position);
 
 		neighbours.forEach(neighbour => {
-			levelGraph.addEdge(node, neighbour);
+			levelGraph.addEdge(tile, neighbour);
 		});
 	});
 
 	if (filter) {
-		levelGraph.nodes.forEach(node => {
-			const entitiesOnTile = getEntitiesOnTile(state, node);
+		tilesInLevel.forEach(tile => {
+			const entitiesOnTile = getEntitiesOnTile(state, tile);
 
 			if (entitiesOnTile.some(entity => !filter(entity))) {
-				levelGraph.removeNode(node);
+				levelGraph.removeNode(tile);
 			}
 		});
 	}

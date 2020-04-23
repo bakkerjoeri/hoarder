@@ -14,7 +14,7 @@ export function dijkstra(graph: Graph, startNodeOrNodes: Node | Node[], goal?: N
     }
 
     startNodeOrNodes.forEach((startNode: Node) => {
-        if (!graph.nodes.includes(startNode)) {
+        if (!graph.hasNode(startNode)) {
             throw new Error('Starting node was not found in graph.');
         }
 

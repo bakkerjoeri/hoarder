@@ -2,7 +2,7 @@ import { Graph } from './graph.js';
 import { Node } from './types.js';
 
 export function floodFill(graph: Graph, start: Node): Node[] {
-    if (!graph.nodes.includes(start)) {
+    if (!graph.hasNode(start)) {
         throw new Error('Starting node was not found.');
     }
 
