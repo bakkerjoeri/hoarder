@@ -1,27 +1,21 @@
 import { Node, Edge } from './types.js';
 
 export class Graph {
-    nodes: Node[] = [];
     edges: Edge[] = [];
-
-    addNode(node: Node): void {
-        this.nodes = [
-            ...this.nodes,
-            node,
-        ];
-    }
 
     findNeighbours(node: Node): Node[] {
         return this.findEdgesFromNode(node).map((edge) => {
             return edge.to;
         });
-    }
+	}
+
+	hasNode(node: Node): boolean {
+		return this.edges.some(edge => {
+			return edge.to === node || edge.from === node;
+		});
+	}
 
     removeNode(nodeToRemove: Node): void {
-        this.nodes = this.nodes.filter((node) => {
-            return node !== nodeToRemove;
-        });
-
         this.edges = this.edges.filter((edge) => {
             return edge.from !== nodeToRemove && edge.to !== nodeToRemove;
         });
