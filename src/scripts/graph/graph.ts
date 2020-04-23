@@ -28,14 +28,6 @@ export class Graph {
     }
 
     addEdge(from: Node, to: Node, weight = 1, data?: Edge['data']): void {
-        if (!this.nodes.includes(from)) {
-            throw new Error('Cannot add edge from a node that does not exist.');
-        }
-
-        if (!this.nodes.includes(to)) {
-            throw new Error('Cannot add edge to a node that does not exist.');
-        }
-
         this.edges = [
             ...this.edges,
             { from, to, weight, data }
