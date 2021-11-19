@@ -55,10 +55,10 @@ export function findEntities(entities: Entity[], filters: ComponentFilterMap): E
 	});
 }
 
-export function findEntity(entities: Entity[], filters: ComponentFilterMap): Entity | undefined {
+export function findEntity<EntityType extends Entity>(entities: Entity[], filters: ComponentFilterMap): (EntityType) | undefined {
 	return entities.find(entity => {
 		return doesEntityValueMatch(entity, filters);
-	});
+	}) as EntityType;
 }
 
 export function doesEntityValueMatch(entity: Entity, filters: ComponentFilterMap): boolean {

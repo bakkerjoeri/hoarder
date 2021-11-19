@@ -154,10 +154,10 @@ window.addEventListener('keyup', (event: KeyboardEvent) => {
 		return;
 	}
 
-	const playerEntityThatCanAct = findEntity(getEntitiesInLevel(state, getLevel(state, state.currentLevel)), {
+	const playerEntityThatCanAct = findEntity<PlayerEntity>(getEntitiesInLevel(state, getLevel(state, state.currentLevel)), {
 		isPlayer: true,
 		actionTicks: 0,
-	}) as PlayerEntity;
+	});
 
 	if (!playerEntityThatCanAct) {
 		return;
